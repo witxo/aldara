@@ -5,7 +5,6 @@ use App\Http\Controllers\Admin\AdminController;
 
 Route::middleware(['auth', 'superadmin'])->prefix('/admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/tenants', [AdminController::class, 'tenants'])->name('tenants');
     Route::get('/tenants/create', [AdminController::class, 'createTenant'])->name('tenants.create');
