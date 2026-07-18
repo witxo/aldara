@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Http\Controllers\Property;
+
+use App\Http\Controllers\Controller;
+use App\Domains\Property\Models\Property;
+use Illuminate\Http\Request;
+
+class PropertyController extends Controller
+{
+    public function index()
+    {
+        $properties = Property::where('tenant_id', tenant_id())->paginate(15);
+        return view('panels.properties.index', compact('properties'));
+    }
+
+    public function create()
+    {
+        return view('panels.properties.form');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string',
+            'address_line1' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:10',
+            'license_number' => 'nullable|string|max:50',
+            'capacity' => 'nullable|integer|min:1',
+        ]);
+
+        $validated['tenant_id'] = tenant_id();
+        Property::create($validated);
+
+        return redirect()->route('properties.index')->with('success', 'Alojamiento creado');
+    }
+
+    public function show(Property $property)
+    {
+        $this->authorize('view', $property);
+        return view('panels.properties.show', compact('property'));
+    }
+
+    public function edit(Property $property)
+    {
+        $this->authorize('update', $property);
+        return view('panels.properties.form', compact('property'));
+    }
+
+    public function update(Request $request, Property $property)
+    {
+        $this->authorize('update', $property);
+        $property->update($request->validate([
+            'name' => 'sometimes|string|max:255',
+            'type' => 'sometimes|string',
+            'address_line1' => 'sometimes|string|max:255',
+            'city' => 'sometimes|string|max:100',
+            'state' => 'sometimes|string|max:100',
+            'postal_code' => 'sometimes|string|max:10',
+            'license_number' => 'nullable|string|max:50',
+            'is_active' => 'sometimes|boolean',
+        ]));
+
+        return redirect()->route('properties.index')->with('success', 'Alojamiento actualizado');
+    }
+
+    public function destroy(Property $property)
+    {
+        $this->authorize('delete', $property);
+        $property->delete();
+        return redirect()->route('properties.index')->with('success', 'Alojamiento eliminado');
+    }
+}

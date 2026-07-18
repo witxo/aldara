@@ -1,0 +1,33 @@
+services:
+  app:
+    restart: always
+    env_file:
+      - ./backend/.env
+
+  web:
+    restart: always
+    depends_on:
+      - app
+
+  db:
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+
+  redis:
+    restart: always
+
+  mailpit:
+    profiles: ["dev"]
+    restart: "no"
+
+  horizon:
+    restart: always
+    env_file:
+      - ./backend/.env
+
+  scheduler:
+    restart: always
+    env_file:
+      - ./backend/.env
