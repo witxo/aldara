@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'core/api/api_client.dart';
 import 'core/storage/auth_storage.dart';
@@ -9,8 +10,9 @@ import 'features/home/screens/dashboard_screen.dart';
 import 'features/checkin/screens/presential_checkin_screen.dart';
 import 'features/tenants/screens/tenant_selector_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('es', null);
   runApp(const CheckInApp());
 }
 

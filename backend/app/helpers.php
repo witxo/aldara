@@ -2,6 +2,7 @@
 
 use App\Domains\Tenant\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Request;
 
 if (!function_exists('tenant_id')) {
     function tenant_id(): ?int
@@ -12,6 +13,17 @@ if (!function_exists('tenant_id')) {
 
         if (Auth::check() && session()->has('current_tenant_id')) {
             return (int) session('current_tenant_id');
+        }
+
+        if ($header = Request::header('X-Tenant-Id')) {
+            return (int) $header;
+        }
+
+        if (Auth::check()) {
+            $tenants = Auth::user()->tenants()->pluck('tenants.id');
+            if ($tenants->count() === 1) {
+                return (int) $tenants->first();
+            }
         }
 
         return null;

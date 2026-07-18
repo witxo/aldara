@@ -10,7 +10,7 @@ class ApiClient {
     _dio = Dio(BaseOptions(
       baseUrl: const String.fromEnvironment(
         'API_URL',
-        defaultValue: 'http://10.0.2.2:8080/api/v1',
+        defaultValue: 'https://aldara.ivema.es/api/v1',
       ),
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 30),
