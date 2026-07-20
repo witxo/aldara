@@ -23,18 +23,12 @@ class SettingsController extends Controller
             'default_checkin_time' => 'date_format:H:i',
             'default_checkout_time' => 'date_format:H:i',
             'retention_days' => 'integer|min:30|max:3650',
-            'ses_username' => 'nullable|string|max:255',
-            'ses_password' => 'nullable|string|max:255',
-            'ses_codigo_arrendador' => 'nullable|string|max:10',
         ]);
 
         $settings = $tenant->settings ?? [];
 
         foreach ($validated as $key => $value) {
             if ($request->has($key)) {
-                if ($key === 'ses_password' && empty($value)) {
-                    continue;
-                }
                 $settings[$key] = $value;
             }
         }

@@ -14,7 +14,7 @@ class PropertyFormScreen extends StatefulWidget {
 
 class _PropertyFormScreenState extends State<PropertyFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _name, _address, _city, _state, _postalCode, _license, _capacity, _checkinTime, _checkoutTime;
+  late TextEditingController _name, _address, _city, _state, _postalCode, _license, _capacity, _checkinTime, _checkoutTime, _sesCode, _sesUser, _sesPass, _sesArrendador;
   String _type = 'apartment';
   bool _saving = false;
   bool get _editing => widget.property != null;
@@ -32,6 +32,10 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
     _capacity = TextEditingController(text: p?['capacity']?.toString() ?? '');
     _checkinTime = TextEditingController(text: p?['checkin_time'] ?? '');
     _checkoutTime = TextEditingController(text: p?['checkout_time'] ?? '');
+    _sesCode = TextEditingController(text: p?['ses_establecimiento_code'] ?? '');
+    _sesUser = TextEditingController(text: p?['ses_username'] ?? '');
+    _sesPass = TextEditingController(text: p?['ses_password'] ?? '');
+    _sesArrendador = TextEditingController(text: p?['ses_codigo_arrendador'] ?? '');
     _type = p?['type'] ?? 'apartment';
   }
 
@@ -40,6 +44,7 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
     _name.dispose(); _address.dispose(); _city.dispose(); _state.dispose();
     _postalCode.dispose(); _license.dispose(); _capacity.dispose();
     _checkinTime.dispose(); _checkoutTime.dispose();
+    _sesCode.dispose(); _sesUser.dispose(); _sesPass.dispose(); _sesArrendador.dispose();
     super.dispose();
   }
 
@@ -54,6 +59,10 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
         'country': 'ES', 'license_number': _license.text,
         'capacity': int.tryParse(_capacity.text), 'checkin_time': _checkinTime.text.isEmpty ? null : _checkinTime.text,
         'checkout_time': _checkoutTime.text.isEmpty ? null : _checkoutTime.text,
+        'ses_establecimiento_code': _sesCode.text.isEmpty ? null : _sesCode.text,
+        'ses_username': _sesUser.text.isEmpty ? null : _sesUser.text,
+        'ses_password': _sesPass.text.isEmpty ? null : _sesPass.text,
+        'ses_codigo_arrendador': _sesArrendador.text.isEmpty ? null : _sesArrendador.text,
       };
 
       if (_editing) {
@@ -108,6 +117,17 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
               ]),
               const SizedBox(height: 12),
               TextFormField(controller: _license, decoration: const InputDecoration(labelText: 'Nº licencia')),
+              const SizedBox(height: 12),
+              TextFormField(controller: _sesCode, decoration: const InputDecoration(labelText: 'Código establecimiento MIR', hintText: '10 caracteres'), maxLength: 10),
+              const SizedBox(height: 16),
+              const Divider(),
+              Text('SES Hospedajes (Ministerio del Interior)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textSecondary)),
+              const SizedBox(height: 12),
+              TextFormField(controller: _sesUser, decoration: const InputDecoration(labelText: 'Usuario SES', hintText: 'Usuario HTTP Basic Auth')),
+              const SizedBox(height: 12),
+              TextFormField(controller: _sesPass, decoration: const InputDecoration(labelText: 'Contraseña SES', hintText: '••••••••'), obscureText: true),
+              const SizedBox(height: 12),
+              TextFormField(controller: _sesArrendador, decoration: const InputDecoration(labelText: 'Código arrendador', hintText: '0000000001'), maxLength: 10),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _saving ? null : _save,

@@ -37,6 +37,10 @@ class PropertyController extends Controller
             'capacity' => 'nullable|integer|min:1',
             'checkin_time' => 'nullable|date_format:H:i',
             'checkout_time' => 'nullable|date_format:H:i',
+            'ses_establecimiento_code' => 'nullable|string|max:10',
+            'ses_username' => 'nullable|string|max:255',
+            'ses_password' => 'nullable|string|max:255',
+            'ses_codigo_arrendador' => 'nullable|string|max:10',
         ]);
 
         $validated['tenant_id'] = tenant_id();
@@ -74,7 +78,17 @@ class PropertyController extends Controller
             'license_number' => 'nullable|string|max:50',
             'capacity' => 'nullable|integer|min:1',
             'is_active' => 'sometimes|boolean',
+            'checkin_time' => 'nullable|date_format:H:i',
+            'checkout_time' => 'nullable|date_format:H:i',
+            'ses_establecimiento_code' => 'nullable|string|max:10',
+            'ses_username' => 'nullable|string|max:255',
+            'ses_password' => 'nullable|string|max:255',
+            'ses_codigo_arrendador' => 'nullable|string|max:10',
         ]);
+
+        if (empty($validated['ses_password'])) {
+            unset($validated['ses_password']);
+        }
 
         $property->update($validated);
 

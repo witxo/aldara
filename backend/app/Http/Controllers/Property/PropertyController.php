@@ -30,6 +30,12 @@ class PropertyController extends Controller
             'postal_code' => 'required|string|max:10',
             'license_number' => 'nullable|string|max:50',
             'capacity' => 'nullable|integer|min:1',
+            'checkin_time' => 'nullable|date_format:H:i',
+            'checkout_time' => 'nullable|date_format:H:i',
+            'ses_establecimiento_code' => 'nullable|string|max:10',
+            'ses_username' => 'nullable|string|max:255',
+            'ses_password' => 'nullable|string|max:255',
+            'ses_codigo_arrendador' => 'nullable|string|max:10',
         ]);
 
         $validated['tenant_id'] = tenant_id();
@@ -53,7 +59,7 @@ class PropertyController extends Controller
     public function update(Request $request, Property $property)
     {
         $this->authorize('update', $property);
-        $property->update($request->validate([
+        $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'type' => 'sometimes|string',
             'address_line1' => 'sometimes|string|max:255',
@@ -62,7 +68,19 @@ class PropertyController extends Controller
             'postal_code' => 'sometimes|string|max:10',
             'license_number' => 'nullable|string|max:50',
             'is_active' => 'sometimes|boolean',
-        ]));
+            'checkin_time' => 'nullable|date_format:H:i',
+            'checkout_time' => 'nullable|date_format:H:i',
+            'ses_establecimiento_code' => 'nullable|string|max:10',
+            'ses_username' => 'nullable|string|max:255',
+            'ses_password' => 'nullable|string|max:255',
+            'ses_codigo_arrendador' => 'nullable|string|max:10',
+        ]);
+
+        if (empty($validated['ses_password'])) {
+            unset($validated['ses_password']);
+        }
+
+        $property->update($validated);
 
         return redirect()->route('properties.index')->with('success', 'Alojamiento actualizado');
     }

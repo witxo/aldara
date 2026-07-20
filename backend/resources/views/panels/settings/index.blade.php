@@ -30,28 +30,7 @@
                     <label class="text-sm">Requerir documento en check-in</label>
                 </div>
             </div>
-            <div class="mt-8 pt-6 border-t border-gray-200">
-                <h4 class="text-md font-semibold mb-4">Conexión SES Hospedajes (Ministerio del Interior)</h4>
-                <p class="text-sm text-gray-500 mb-4">Credenciales para el envío de partes de viajeros al MIR vía SOAP.</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-                        <input type="text" name="ses_username" value="{{ old('ses_username', $settings['ses_username'] ?? '') }}" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Usuario HTTP Basic Auth">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                        <input type="password" name="ses_password" value="{{ old('ses_password', $settings['ses_password'] ?? '') }}" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="••••••••">
-                        <p class="text-xs text-gray-400 mt-0.5">Dejar en blanco para mantener la actual</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Código de arrendador</label>
-                        <input type="text" name="ses_codigo_arrendador" value="{{ old('ses_codigo_arrendador', $settings['ses_codigo_arrendador'] ?? '') }}" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" maxlength="10" placeholder="0000000001">
-                        <p class="text-xs text-gray-400 mt-0.5">Código asignado por el Ministerio del Interior</p>
-                    </div>
-                </div>
-            </div>
             <div class="mt-6 flex justify-end gap-3">
-                <a href="{{ route('settings.test-ses') }}" class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Probar conexión</a>
                 <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm">Guardar ajustes</button>
             </div>
         </form>

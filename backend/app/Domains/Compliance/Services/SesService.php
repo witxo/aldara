@@ -3,6 +3,7 @@
 namespace App\Domains\Compliance\Services;
 
 use App\Domains\Compliance\Models\SesSubmission;
+use App\Domains\Property\Models\Property;
 use App\Domains\Reservation\Models\Reservation;
 use App\Domains\Checkin\Models\Checkin;
 use Illuminate\Support\Facades\Http;
@@ -52,8 +53,10 @@ class SesService
             return $submission;
         }
 
+        $property = $submission->reservation?->property;
+
         try {
-            $response = $this->sendSoapRequest($submission->payload);
+            $response = $this->sendSoapRequest($submission->payload, $property);
 
             if ($response['success']) {
                 $submission->update([
@@ -147,7 +150,7 @@ class SesService
         ];
     }
 
-    protected function sendSoapRequest(array $payload): array
+    protected function sendSoapRequest(array $payload, ?Property $property = null): array
     {
         $zipBase64 = $payload['zip_base64'] ?? '';
 
@@ -155,9 +158,9 @@ class SesService
             return ['success' => false, 'error' => 'No hay datos XML para enviar'];
         }
 
-        $soapBody = $this->buildSoapEnvelope($zipBase64, 'A', 'PV');
+        $soapBody = $this->buildSoapEnvelope($zipBase64, 'A', 'PV', $property);
 
-        $response = $this->soapHttpCall($soapBody);
+        $response = $this->soapHttpCall($soapBody, $property);
 
         if (!$response['success']) {
             return $response;
@@ -182,9 +185,9 @@ class SesService
         ];
     }
 
-    protected function buildSoapEnvelope(string $solicitudBase64, string $tipoOperacion, string $tipoComunicacion = ''): string
+    protected function buildSoapEnvelope(string $solicitudBase64, string $tipoOperacion, string $tipoComunicacion = '', ?Property $property = null): string
     {
-        $sesConfig = tenant_ses_config();
+        $sesConfig = tenant_ses_config(null, $property);
         $codigoArrendador = $sesConfig['codigo_arrendador'];
         $aplicacion = $sesConfig['aplicacion'];
 
@@ -213,9 +216,9 @@ class SesService
 XML;
     }
 
-    protected function soapHttpCall(string $soapBody): array
+    protected function soapHttpCall(string $soapBody, ?Property $property = null): array
     {
-        $sesConfig = tenant_ses_config();
+        $sesConfig = tenant_ses_config(null, $property);
         $endpoint = $sesConfig['endpoint'] ?: $this->getDefaultEndpoint();
         $username = $sesConfig['username'];
         $password = $sesConfig['password'];

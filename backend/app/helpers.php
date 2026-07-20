@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Property\Models\Property;
 use App\Domains\Tenant\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
@@ -45,18 +46,28 @@ if (!function_exists('current_tenant')) {
 }
 
 if (!function_exists('tenant_ses_config')) {
-    function tenant_ses_config(?string $key = null): mixed
+    function tenant_ses_config(?string $key = null, ?Property $property = null): mixed
     {
         $tenant = current_tenant();
         $settings = $tenant?->settings ?? [];
 
-        $config = [
-            'username' => $settings['ses_username'] ?? config('ses.username'),
-            'password' => $settings['ses_password'] ?? config('ses.password'),
-            'codigo_arrendador' => $settings['ses_codigo_arrendador'] ?? config('ses.codigo_arrendador'),
-            'aplicacion' => config('ses.aplicacion', 'Aldara'),
-            'endpoint' => config('ses.endpoint'),
-        ];
+        if ($property) {
+            $config = [
+                'username' => $property->ses_username ?? $settings['ses_username'] ?? config('ses.username'),
+                'password' => $property->ses_password ?? $settings['ses_password'] ?? config('ses.password'),
+                'codigo_arrendador' => $property->ses_codigo_arrendador ?? $settings['ses_codigo_arrendador'] ?? config('ses.codigo_arrendador'),
+                'aplicacion' => config('ses.aplicacion', 'Aldara'),
+                'endpoint' => config('ses.endpoint'),
+            ];
+        } else {
+            $config = [
+                'username' => $settings['ses_username'] ?? config('ses.username'),
+                'password' => $settings['ses_password'] ?? config('ses.password'),
+                'codigo_arrendador' => $settings['ses_codigo_arrendador'] ?? config('ses.codigo_arrendador'),
+                'aplicacion' => config('ses.aplicacion', 'Aldara'),
+                'endpoint' => config('ses.endpoint'),
+            ];
+        }
 
         if ($key) {
             return $config[$key] ?? null;
