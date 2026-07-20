@@ -208,5 +208,12 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
     );
   }
 
-  String _fmt(String? d) => d != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse('${d}T00:00:00')) : '-';
+  String _fmt(String? d) {
+    if (d == null) return '-';
+    try {
+      final ds = d.substring(0, 10).split('-');
+      final date = DateTime(int.parse(ds[0]), int.parse(ds[1]), int.parse(ds[2]));
+      return DateFormat('dd/MM/yyyy').format(date);
+    } catch (_) { return '-'; }
+  }
 }

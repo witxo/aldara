@@ -152,8 +152,8 @@ class _ReservationListScreenState extends State<ReservationListScreen> {
   }
 
   Widget _buildCard(dynamic r) {
-    final ci = r['checkin_date'] != null ? DateTime.tryParse('${r['checkin_date']}T00:00:00') : null;
-    final co = r['checkout_date'] != null ? DateTime.tryParse('${r['checkout_date']}T00:00:00') : null;
+    final ci = r['checkin_date'] != null ? _parseDate(r['checkin_date']) : null;
+    final co = r['checkout_date'] != null ? _parseDate(r['checkout_date']) : null;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
@@ -192,5 +192,13 @@ class _ReservationListScreenState extends State<ReservationListScreen> {
         ),
       ),
     );
+  }
+
+  DateTime? _parseDate(String? d) {
+    if (d == null || d.length < 10) return null;
+    try {
+      final ds = d.substring(0, 10).split('-');
+      return DateTime(int.parse(ds[0]), int.parse(ds[1]), int.parse(ds[2]));
+    } catch (_) { return null; }
   }
 }
