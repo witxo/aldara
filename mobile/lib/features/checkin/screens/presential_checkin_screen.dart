@@ -39,7 +39,7 @@ class _PresentialCheckinScreenState extends State<PresentialCheckinScreen> {
         'per_page': '5',
       });
 
-      final reservations = response.data['data'] as List;
+      final reservations = response['data'] as List;
       if (reservations.isEmpty) {
         setState(() { _error = 'No se encontraron reservas'; _searching = false; });
         return;

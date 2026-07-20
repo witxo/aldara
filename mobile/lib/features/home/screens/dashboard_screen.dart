@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/i18n/app_localizations.dart';
+import '../../../core/api/api_client.dart';
+import '../../../core/widgets/status_badge.dart';
+import '../../../core/widgets/app_layout.dart';
+import '../../../core/widgets/loading_overlay.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -13,7 +20,10 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   List<dynamic> _todayReservations = [];
   bool _loading = true;
-  Map<String, int> _stats = {};
+  int _totalReservations = 0;
+  int _checkinsPending = 0;
+  int _activeGuests = 0;
+  String? _error;
 
   @override
   void initState() {
@@ -27,156 +37,96 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final api = context.read<AuthProvider>().api;
       final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-      final reservations = await api.get('/reservations', queryParameters: {
+      final resResponse = await api.get('/reservations', queryParameters: {
         'checkin_date_from': today,
         'checkin_date_to': today,
         'per_page': '20',
+        'sort': '-created_at',
       });
 
-      final stats = await api.get('/reservations', queryParameters: {
-        'per_page': '1',
+      final checkinResponse = await api.get('/checkins', queryParameters: {
+        'per_page': '10',
+        'sort': '-created_at',
       });
 
-      setState(() {
-        _todayReservations = reservations.data['data'] ?? [];
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() => _loading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar datos: $e')),
-        );
+        setState(() {
+          _todayReservations = (resResponse['data'] as List<dynamic>?) ?? [];
+          _totalReservations = (resResponse['meta']?['total'] as int?) ?? _todayReservations.length;
+          _checkinsPending = ((checkinResponse['data'] as List<dynamic>?) ?? [])
+              .where((c) => c['status'] == 'pending' || c['status'] == 'in_progress').length;
+          _activeGuests = ((checkinResponse['data'] as List<dynamic>?) ?? [])
+              .where((c) => c['status'] == 'completed' || c['status'] == 'verified').length;
+          _loading = false;
+        });
       }
+    } catch (e) {
+      if (mounted) setState(() { _loading = false; _error = e.toString(); });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final tenantName = auth.selectedTenant?['company_name'] ?? 'CheckIn';
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(tenantName),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => auth.logout(),
+    final l = AppLocalizations.of(context);
+    return AppLayout(
+      title: l.translate('dashboard.title'),
+      currentRoute: 'dashboard',
+      body: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: _loadData,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildStatsRow(),
+                const SizedBox(height: 24),
+                Text(l.translate('dashboard.today_reservations'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                if (_todayReservations.isEmpty)
+                  EmptyState(icon: Icons.event_busy, message: l.translate('dashboard.no_reservations'))
+                else
+                  ..._todayReservations.map((r) => _buildReservationCard(r)),
+                const SizedBox(height: 24),
+                Text(l.translate('dashboard.quick_actions'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: _buildActionCard(Icons.search, l.translate('dashboard.search_reservation'), () => Navigator.pushNamed(context, '/reservations'))),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildActionCard(Icons.edit_note, l.translate('dashboard.quick_checkin'), () => Navigator.pushNamed(context, '/checkin/presential'))),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _buildDateHeader(),
-                  const SizedBox(height: 16),
-                  _buildStatsRow(),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Reservas de hoy',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (_todayReservations.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(Icons.event_busy, size: 48, color: Colors.grey[400]),
-                              const SizedBox(height: 8),
-                              Text('No hay reservas para hoy', style: TextStyle(color: Colors.grey[600])),
-                            ],
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ..._todayReservations.map((r) => _buildReservationCard(r)),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Acciones rápidas',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickAction(
-                          icon: Icons.search,
-                          label: 'Buscar reserva',
-                          onTap: () => _showSearchReservation(context),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickAction(
-                          icon: Icons.edit_note,
-                          label: 'Check-in rápido',
-                          onTap: () => Navigator.pushNamed(context, '/checkin/presential'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
-  Widget _buildDateHeader() {
-    final now = DateTime.now();
-    final formatter = DateFormat("EEEE, d 'de' MMMM", 'es');
-    return Row(
-      children: [
-        const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
-        const SizedBox(width: 8),
-        Text(
-          formatter.format(now),
-          style: TextStyle(color: Colors.grey[600], fontSize: 16),
-        ),
-      ],
     );
   }
 
   Widget _buildStatsRow() {
     return Row(
       children: [
-        _buildStatCard('Hoy', _todayReservations.length, Colors.blue),
-        const SizedBox(width: 12),
-        _buildStatCard('Entradas', _todayReservations.where((r) => r['status'] == 'confirmed').length, Colors.green),
-        const SizedBox(width: 12),
-        _buildStatCard('Pendientes', _todayReservations.where((r) => r['status'] == 'checkin_sent').length, Colors.orange),
+        Expanded(child: StatCardWidget(label: 'Hoy', value: '$_totalReservations', icon: Icons.calendar_today, color: AppColors.primary)),
+        const SizedBox(width: 8),
+        Expanded(child: StatCardWidget(label: 'Pendientes', value: '$_checkinsPending', icon: Icons.pending, color: AppColors.warning)),
+        const SizedBox(width: 8),
+        Expanded(child: StatCardWidget(label: 'Activos', value: '$_activeGuests', icon: Icons.people, color: AppColors.success)),
       ],
     );
   }
 
-  Widget _buildStatCard(String label, int count, Color color) {
-    return Expanded(
-      child: Card(
+  Widget _buildActionCard(IconData icon, String label, VoidCallback onTap) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-              Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              Icon(icon, size: 28, color: AppColors.primary),
+              const SizedBox(height: 8),
+              Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
             ],
           ),
         ),
@@ -185,104 +135,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildReservationCard(dynamic r) {
-    final checkin = DateTime.parse(r['checkin_date']);
-    final checkout = DateTime.parse(r['checkout_date']);
-    final statusColors = {
-      'confirmed': Colors.blue,
-      'checkin_sent': Colors.orange,
-      'completed': Colors.green,
-      'cancelled': Colors.red,
-    };
+    final checkin = r['checkin_date'] != null ? DateTime.tryParse(r['checkin_date']) : null;
+    final checkout = r['checkout_date'] != null ? DateTime.tryParse(r['checkout_date']) : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        title: Text(r['guest_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text('${DateFormat('dd/MM').format(checkin)} - ${DateFormat('dd/MM').format(checkout)}'),
-            Text('${r['adults']} adultos · ${r['children']} niños'),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: (statusColors[r['status']] ?? Colors.grey).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => Navigator.pushNamed(context, '/reservations/detail', arguments: r),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(color: AppColors.primaryBg, borderRadius: BorderRadius.circular(10)),
+                child: Center(child: Text(
+                  (r['guest_name'] as String? ?? '?')[0].toUpperCase(),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary),
+                )),
               ),
-              child: Text(
-                r['status']?.replaceAll('_', ' ') ?? '',
-                style: TextStyle(
-                  color: statusColors[r['status']] ?? Colors.grey,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(r['guest_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    if (checkin != null && checkout != null)
+                      Text('${DateFormat('dd/MM').format(checkin)} - ${DateFormat('dd/MM').format(checkout)}',
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Text('${r['adults'] ?? 0} adultos · ${r['children'] ?? 0} niños',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 4),
-            TextButton.icon(
-              onPressed: () => _startCheckin(r),
-              icon: const Icon(Icons.check_circle, size: 16),
-              label: const Text('Check-in', style: TextStyle(fontSize: 12)),
-              style: TextButton.styleFrom(foregroundColor: Colors.blue, padding: const EdgeInsets.symmetric(horizontal: 8)),
-            ),
-          ],
-        ),
-        onTap: () => Navigator.pushNamed(context, '/reservations/detail', arguments: r),
-      ),
-    );
-  }
-
-  Widget _buildQuickAction({required IconData icon, required String label, required VoidCallback onTap}) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Icon(icon, size: 32, color: const Color(0xFF2563EB)),
-              const SizedBox(height: 8),
-              Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+              StatusBadge(r['status'] as String?),
             ],
           ),
         ),
       ),
     );
   }
-
-  void _showSearchReservation(BuildContext context) {
-    showSearch(context: context, delegate: _ReservationSearchDelegate());
-  }
-
-  void _startCheckin(dynamic reservation) {
-    Navigator.pushNamed(context, '/checkin/presential', arguments: reservation);
-  }
 }
 
-class _ReservationSearchDelegate extends SearchDelegate {
-  @override
-  List<Widget>? buildActions(BuildContext context) => [
-    IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
-  ];
+class StatCardWidget extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const StatCardWidget({super.key, required this.label, required this.value, required this.icon, required this.color});
 
   @override
-  Widget? buildLeading(BuildContext context) => IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () => close(context, null),
-  );
-
-  @override
-  Widget buildResults(BuildContext context) => const Center(child: Text('Resultados'));
-
-  @override
-  Widget buildSuggestions(BuildContext context) => const Center(child: Text('Buscar por nombre o código'));
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(height: 8),
+            Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+          ],
+        ),
+      ),
+    );
+  }
 }

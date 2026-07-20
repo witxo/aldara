@@ -67,30 +67,98 @@ class AuthProvider extends ChangeNotifier {
         'device_name': 'mobile',
       });
 
-      final data = response.data['data'];
-      _token = data['token'];
-      _user = data['user'];
+      final data = response['data'] as Map<String, dynamic>;
+      _token = data['token'] as String?;
+      _user = data['user'] as Map<String, dynamic>?;
       _tenants = List<Map<String, dynamic>>.from(data['tenants'] ?? []);
 
-      await _storage.saveToken(_token!);
-      await _storage.saveUserData(jsonEncode(_user));
+      if (_token != null) {
+        await _storage.saveToken(_token!);
+        await _storage.saveUserData(jsonEncode(_user));
+        _api.setToken(_token);
 
-      _api.setToken(_token);
+        _isAuthenticated = true;
 
-      _isAuthenticated = true;
-
-      if (_tenants.length == 1) {
-        await selectTenant(_tenants.first['id']);
-        _needsTenantSelection = false;
-      } else if (_tenants.length > 1) {
-        _needsTenantSelection = true;
+        if (_tenants.length == 1) {
+          await selectTenant(_tenants.first['id'] as int);
+          _needsTenantSelection = false;
+        } else if (_tenants.length > 1) {
+          _needsTenantSelection = true;
+        }
       }
 
       _isLoading = false;
       notifyListeners();
       return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e) {
       _error = 'Credenciales incorrectas';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> register(String name, String email, String password, String passwordConfirmation) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _api.post('/register', data: {
+        'name': name,
+        'email': email,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      });
+
+      final data = response['data'] as Map<String, dynamic>?;
+      if (data != null && data['token'] != null) {
+        _token = data['token'] as String;
+        _user = data['user'] as Map<String, dynamic>?;
+        await _storage.saveToken(_token!);
+        await _storage.saveUserData(jsonEncode(_user));
+        _api.setToken(_token);
+        _isAuthenticated = true;
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = 'Error al registrarse';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> sendForgotPassword(String email) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _api.post('/auth/forgot-password', data: {'email': email});
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = 'Error al enviar email';
       _isLoading = false;
       notifyListeners();
       return false;

@@ -57,14 +57,6 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-## Usuarios Demo
-
-| Email | Contraseña | Rol |
-|-------|-----------|-----|
-| admin@checkin.local | password | Superadmin |
-| owner@checkin.local | password | Owner (Demo Tenant) |
-| staff@checkin.local | password | Recepcionista (Demo Tenant) |
-
 ## App Móvil
 
 ```bash

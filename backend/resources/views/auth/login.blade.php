@@ -36,9 +36,6 @@
                 ¿No tiene cuenta? <a href="{{ route('register') }}" class="text-blue-600 hover:underline">Regístrese</a>
             </p>
         </div>
-        <div class="mt-4 text-center text-xs text-gray-400">
-            Demo: admin@checkin.local / password
-        </div>
     </div>
 </div>
 @endsection
