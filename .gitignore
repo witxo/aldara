@@ -1,0 +1,17 @@
+backend/.env
+backend/node_modules/
+backend/vendor/
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+backend/bootstrap/cache/*.php
+backend/.phpunit.result.cache
+backend/.idea/
+backend/.vscode/
+mobile/.env
+mobile/build/
+mobile/.idea/
+mobile/.vscode/
+.DS_Store
+Thumbs.db
