@@ -177,6 +177,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  DateTime? _parseDate(String? d) {
+    if (d == null) return null;
+    try {
+      return DateTime.parse(d).toLocal();
+    } catch (_) { return null; }
+  }
 }
 
 class StatCardWidget extends StatelessWidget {
@@ -204,13 +211,5 @@ class StatCardWidget extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  DateTime? _parseDate(String? d) {
-    if (d == null || d.length < 10) return null;
-    try {
-      final ds = d.substring(0, 10).split('-');
-      return DateTime(int.parse(ds[0]), int.parse(ds[1]), int.parse(ds[2]));
-    } catch (_) { return null; }
   }
 }

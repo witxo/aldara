@@ -33,11 +33,11 @@ class ReservationController extends Controller
         }
 
         if ($request->has('checkin_date_from')) {
-            $query->where('checkin_date', '>=', $request->checkin_date_from);
+            $query->whereDate('checkin_date', '>=', $request->checkin_date_from);
         }
 
         if ($request->has('checkin_date_to')) {
-            $query->where('checkin_date', '<=', $request->checkin_date_to);
+            $query->whereDate('checkin_date', '<=', $request->checkin_date_to);
         }
 
         if ($request->has('search')) {

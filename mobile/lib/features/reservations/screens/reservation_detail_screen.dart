@@ -211,8 +211,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
   String _fmt(String? d) {
     if (d == null) return '-';
     try {
-      final ds = d.substring(0, 10).split('-');
-      final date = DateTime(int.parse(ds[0]), int.parse(ds[1]), int.parse(ds[2]));
+      final date = DateTime.parse(d).toLocal();
       return DateFormat('dd/MM/yyyy').format(date);
     } catch (_) { return '-'; }
   }
