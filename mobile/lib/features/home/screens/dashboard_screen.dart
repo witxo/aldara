@@ -135,8 +135,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildReservationCard(dynamic r) {
-    final checkin = r['checkin_date'] != null ? DateTime.tryParse(r['checkin_date']) : null;
-    final checkout = r['checkout_date'] != null ? DateTime.tryParse(r['checkout_date']) : null;
+    final checkin = r['checkin_date'] != null ? DateTime.tryParse('${r['checkin_date']}T00:00:00') : null;
+    final checkout = r['checkout_date'] != null ? DateTime.tryParse('${r['checkout_date']}T00:00:00') : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),

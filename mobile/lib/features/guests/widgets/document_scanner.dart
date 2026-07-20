@@ -4,11 +4,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'spanish_id_parser.dart';
 
-class DocumentScannerWidget extends StatelessWidget {
+class DocumentScannerWidget extends StatefulWidget {
   final void Function(IdParseResult result) onResult;
 
   const DocumentScannerWidget({super.key, required this.onResult});
 
+  @override
+  State<DocumentScannerWidget> createState() => _DocumentScannerWidgetState();
+}
+
+class _DocumentScannerWidgetState extends State<DocumentScannerWidget> {
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -29,7 +34,7 @@ class DocumentScannerWidget extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _pickImage(context, ImageSource.camera),
+                    onPressed: () => _pickImage(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt, size: 18),
                     label: const Text('Cámara', style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10)),
@@ -38,7 +43,7 @@ class DocumentScannerWidget extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _pickImage(context, ImageSource.gallery),
+                    onPressed: () => _pickImage(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library, size: 18),
                     label: const Text('Galería', style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10)),
@@ -52,15 +57,15 @@ class DocumentScannerWidget extends StatelessWidget {
     );
   }
 
-  Future<void> _pickImage(BuildContext context, ImageSource source) async {
+  Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: source, maxWidth: 1200, maxHeight: 1600);
     if (image == null) return;
 
-    _processImage(context, File(image.path));
+    _processImage(File(image.path));
   }
 
-  Future<void> _processImage(BuildContext context, File file) async {
+  Future<void> _processImage(File file) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -89,7 +94,7 @@ class DocumentScannerWidget extends StatelessWidget {
         return;
       }
 
-      onResult(result);
+      widget.onResult(result);
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);

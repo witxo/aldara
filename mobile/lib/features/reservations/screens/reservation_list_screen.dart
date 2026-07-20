@@ -152,8 +152,8 @@ class _ReservationListScreenState extends State<ReservationListScreen> {
   }
 
   Widget _buildCard(dynamic r) {
-    final ci = r['checkin_date'] != null ? DateTime.tryParse(r['checkin_date']) : null;
-    final co = r['checkout_date'] != null ? DateTime.tryParse(r['checkout_date']) : null;
+    final ci = r['checkin_date'] != null ? DateTime.tryParse('${r['checkin_date']}T00:00:00') : null;
+    final co = r['checkout_date'] != null ? DateTime.tryParse('${r['checkout_date']}T00:00:00') : null;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(

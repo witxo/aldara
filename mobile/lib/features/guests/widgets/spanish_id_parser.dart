@@ -142,7 +142,7 @@ class SpanishIdParser {
   }
 
   static String? _cleanName(String raw) {
-    final cleaned = raw.replaceAll(RegExp(r'[^A-Za-zÀ-ÿÑñ\s\'\-]'), '').trim();
+    final cleaned = raw.replaceAll(RegExp(r"[^A-Za-zÀ-ÿÑñ\s'-]"), '').trim();
     if (cleaned.isEmpty || cleaned.length < 2) return null;
     return cleaned.split(RegExp(r'\s+')).where((w) => w.length > 1).join(' ');
   }
