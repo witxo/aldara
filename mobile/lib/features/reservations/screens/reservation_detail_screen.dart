@@ -7,6 +7,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/widgets/app_layout.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../guests/screens/guest_form_screen.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class ReservationDetailScreen extends StatefulWidget {
@@ -118,30 +119,68 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                       ),
                     ),
                   ),
-                if (_guests.isNotEmpty)
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l.translate('reservation.guests'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          ..._guests.map((g) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(children: [
-                              const Icon(Icons.person, size: 16, color: AppColors.textSecondary),
-                              const SizedBox(width: 8),
-                              Text('${g['first_name'] ?? ''} ${g['last_name'] ?? ''}', style: const TextStyle(fontSize: 13)),
-                              const Spacer(),
-                              Text(g['document_number'] ?? '', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                            ]),
-                          )),
-                        ],
-                      ),
+                Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Text('${l.translate('reservation.guests')} (${_guests.length})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const Spacer(),
+                          TextButton.icon(
+                            onPressed: () async {
+                              final result = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(builder: (_) => GuestFormScreen(reservationId: _r!['id'] as int?)),
+                              );
+                              if (result == true) _loadDetail();
+                            },
+                            icon: const Icon(Icons.add, size: 16),
+                            label: const Text('Añadir', style: TextStyle(fontSize: 13)),
+                            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                          ),
+                        ]),
+                        const SizedBox(height: 8),
+                        ...(_guests.isNotEmpty
+                          ? _guests.map((g) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(children: [
+                                const Icon(Icons.person, size: 16, color: AppColors.textSecondary),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text('${g['first_name'] ?? ''} ${g['last_name'] ?? ''}', style: const TextStyle(fontSize: 13))),
+                                if (g['is_main_guest'] == true)
+                                  Container(margin: const EdgeInsets.only(right: 4), padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1), decoration: BoxDecoration(color: AppColors.primaryBg, borderRadius: BorderRadius.circular(4)), child: const Text('Ppal', style: TextStyle(fontSize: 10, color: AppColors.primary))),
+                                PopupMenuButton<String>(
+                                  onSelected: (v) async {
+                                    if (v == 'edit') {
+                                      final result = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => GuestFormScreen(guest: g)));
+                                      if (result == true) _loadDetail();
+                                    } else if (v == 'delete') {
+                                      final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(title: const Text('Eliminar huésped'), content: const Text('¿Está seguro?'), actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')), TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red)))]));
+                                      if (confirm == true) {
+                                        try {
+                                          await context.read<AuthProvider>().api.delete('/guests/${g['id']}');
+                                          _loadDetail();
+                                        } catch (e) {
+                                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                        }
+                                      }
+                                    }
+                                  },
+                                  itemBuilder: (_) => [
+                                    const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 16), SizedBox(width: 8), Text('Editar')])),
+                                    const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 16, color: Colors.red), SizedBox(width: 8), Text('Eliminar', style: TextStyle(color: Colors.red))])),
+                                  ],
+                                ),
+                              ]),
+                            ))
+                          : [Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Text(l.translate('common.no_data'), style: const TextStyle(fontSize: 13, color: AppColors.textMuted)))]),
+                      ],
                     ),
                   ),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ElevatedButton.icon(

@@ -19,6 +19,7 @@ import 'features/properties/screens/property_detail_screen.dart';
 import 'features/properties/screens/property_form_screen.dart';
 import 'features/guests/screens/guest_list_screen.dart';
 import 'features/guests/screens/guest_detail_screen.dart';
+import 'features/guests/screens/guest_form_screen.dart';
 import 'features/checkins/screens/checkin_list_screen.dart';
 import 'features/checkins/screens/checkin_detail_screen.dart';
 import 'features/checkin/screens/presential_checkin_screen.dart';
@@ -97,6 +98,8 @@ class AldaraApp extends StatelessWidget {
                   return _pageRoute(PropertyFormScreen(property: args), settings);
                 case '/guests':
                   return _pageRoute(const GuestListScreen(), settings);
+                case '/guests/create':
+                  return _pageRoute(GuestFormScreen(reservationId: args as int?), settings);
                 case '/guests/detail':
                   return _pageRoute(GuestDetailScreen(guest: args), settings);
                 case '/checkins':

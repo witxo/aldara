@@ -32,16 +32,27 @@
         </div>
 
         <div class="bg-white rounded-lg shadow p-6">
-            <h4 class="font-semibold mb-4">Huéspedes ({{ $reservation->guests->count() }})</h4>
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="font-semibold">Huéspedes ({{ $reservation->guests->count() }})</h4>
+                <a href="{{ route('guests.create', ['reservation_id' => $reservation->id]) }}" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-blue-700">+ Añadir huésped</a>
+            </div>
             @if($reservation->guests->count() > 0)
                 <div class="space-y-3">
                     @foreach($reservation->guests as $guest)
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
                         <div>
-                            <p class="font-medium">{{ $guest->first_name }} {{ $guest->last_name }}</p>
-                            <p class="text-sm text-gray-500">{{ $guest->document_type }}: {{ substr($guest->document_number, -4) }}... (cifrado)</p>
+                            <p class="font-medium">{{ $guest->first_name }} {{ $guest->last_name }}
+                                @if($guest->is_main_guest)<span class="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded ml-1">Principal</span>@endif
+                            </p>
+                            <p class="text-sm text-gray-500">{{ $guest->document_type }}: {{ substr($guest->document_number, -4) }}... (cifrado) · {{ $guest->nationality }}</p>
                         </div>
-                        <span class="text-xs text-gray-500">{{ $guest->nationality }}</span>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('guests.edit', $guest) }}" class="text-blue-600 text-xs hover:underline">Editar</a>
+                            <form method="POST" action="{{ route('guests.destroy', $guest) }}" onsubmit="return confirm('¿Eliminar este huésped?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="text-red-600 text-xs hover:underline">Eliminar</button>
+                            </form>
+                        </div>
                     </div>
                     @endforeach
                 </div>
