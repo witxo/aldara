@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Domains\Compliance\Models\SesSubmission;
 use App\Domains\Compliance\Services\SesService;
+use App\Domains\Property\Models\Property;
 use App\Domains\Reservation\Models\Reservation;
 use Illuminate\Http\Request;
 
@@ -55,6 +56,19 @@ class SesController extends Controller
             'message' => 'Envío SES preparado. Validar payload antes de enviar.',
             'status' => 201,
         ], 201);
+    }
+
+    public function test(Property $property)
+    {
+        $this->authorize('view', $property);
+
+        $result = $this->sesService->ping($property);
+
+        return response()->json([
+            'data' => $result,
+            'message' => $result['success'] ? 'Conexión SES exitosa' : 'Error SES: ' . ($result['descripcion'] ?? 'Error de conexión'),
+            'status' => $result['success'] ? 200 : 500,
+        ]);
     }
 
     public function send(SesSubmission $submission)

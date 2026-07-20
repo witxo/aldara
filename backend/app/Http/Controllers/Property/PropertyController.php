@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Property;
 
 use App\Http\Controllers\Controller;
 use App\Domains\Property\Models\Property;
+use App\Domains\Compliance\Services\SesService;
 use Illuminate\Http\Request;
 
 class PropertyController extends Controller
@@ -90,5 +91,18 @@ class PropertyController extends Controller
         $this->authorize('delete', $property);
         $property->delete();
         return redirect()->route('properties.index')->with('success', 'Alojamiento eliminado');
+    }
+
+    public function testSes(Property $property, SesService $sesService)
+    {
+        $this->authorize('view', $property);
+
+        $result = $sesService->ping($property);
+
+        if (!$result['success']) {
+            return redirect()->route('properties.show', $property)->with('error', 'Error SES: ' . ($result['descripcion'] ?? 'Error de conexión'));
+        }
+
+        return redirect()->route('properties.show', $property)->with('success', 'Conexión SES exitosa. Código: ' . $result['codigo']);
     }
 }

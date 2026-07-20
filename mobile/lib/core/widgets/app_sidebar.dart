@@ -98,7 +98,25 @@ class AppSidebar extends StatelessWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.logout, size: 20, color: AppColors.textSecondary),
-                    onPressed: () => auth.logout(),
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Cerrar sesión'),
+                          content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Cerrar sesión')),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) {
+                        await auth.logout();
+                        if (context.mounted) {
+                          Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+                        }
+                      }
+                    },
                   ),
                 ],
               ),

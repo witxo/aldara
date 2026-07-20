@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Domains\Compliance\Services\SesService;
 
 class SettingsController extends Controller
 {
@@ -36,16 +35,5 @@ class SettingsController extends Controller
         $tenant->update(['settings' => $settings]);
 
         return redirect()->route('settings.index')->with('success', 'Ajustes actualizados');
-    }
-
-    public function testSes(SesService $sesService)
-    {
-        $result = $sesService->ping();
-
-        if (!$result['success']) {
-            return redirect()->route('settings.index')->with('error', 'Error SES: ' . ($result['descripcion'] ?? 'Error de conexión'));
-        }
-
-        return redirect()->route('settings.index')->with('success', 'Conexión SES exitosa. Código: ' . $result['codigo']);
     }
 }

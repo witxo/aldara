@@ -20,6 +20,11 @@
                 <div><span class="text-gray-500">Código MIR:</span> {{ $property->ses_establecimiento_code ?? '—' }}</div>
                 <div><span class="text-gray-500">Usuario SES:</span> {{ $property->ses_username ?? '—' }}</div>
                 <div><span class="text-gray-500">Código arrendador:</span> {{ $property->ses_codigo_arrendador ?? '—' }}</div>
+                <div class="col-span-2 mt-2">
+                    <a href="{{ route('properties.test-ses', $property) }}" class="text-sm text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-plug mr-1"></i> Probar conexión SES
+                    </a>
+                </div>
                 <div><span class="text-gray-500">Check-in:</span> {{ $property->checkin_time ?? '—' }}</div>
                 <div><span class="text-gray-500">Check-out:</span> {{ $property->checkout_time ?? '—' }}</div>
             </div>

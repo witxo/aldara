@@ -6,14 +6,34 @@ import '../../../core/widgets/app_layout.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../auth/providers/auth_provider.dart';
 
-class PropertyDetailScreen extends StatelessWidget {
+class PropertyDetailScreen extends StatefulWidget {
   final dynamic property;
   const PropertyDetailScreen({super.key, required this.property});
 
   @override
+  State<PropertyDetailScreen> createState() => _PropertyDetailScreenState();
+}
+
+class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
+  bool _testingSes = false;
+  String? _sesResult;
+
+  Future<void> _testSes() async {
+    setState(() { _testingSes = true; _sesResult = null; });
+    try {
+      final api = context.read<AuthProvider>().api;
+      final p = widget.property as Map<String, dynamic>;
+      final res = await api.post('/ses/test/${p['id']}');
+      setState(() { _sesResult = res['message'] as String? ?? 'OK'; _testingSes = false; });
+    } catch (e) {
+      setState(() { _sesResult = 'Error: $e'; _testingSes = false; });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final p = property as Map<String, dynamic>;
+    final p = widget.property as Map<String, dynamic>;
 
     return AppLayout(
       title: p['name'] ?? '',
@@ -21,7 +41,7 @@ class PropertyDetailScreen extends StatelessWidget {
       actions: [
         IconButton(
           icon: const Icon(Icons.edit_outlined),
-          onPressed: () => Navigator.pushNamed(context, '/properties/edit', arguments: property),
+          onPressed: () => Navigator.pushNamed(context, '/properties/edit', arguments: widget.property),
         ),
       ],
       body: ListView(
@@ -54,6 +74,24 @@ class PropertyDetailScreen extends StatelessWidget {
                   _field('Código MIR', p['ses_establecimiento_code'] ?? '-'),
                   _field('Usuario SES', p['ses_username'] ?? '-'),
                   _field('Código arrendador', p['ses_codigo_arrendador'] ?? '-'),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: _testingSes ? null : _testSes,
+                    icon: _testingSes
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.check_circle, size: 16),
+                    label: Text('Probar conexión SES'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      textStyle: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                  if (_sesResult != null) ...[
+                    const SizedBox(height: 8),
+                    Text(_sesResult!, style: TextStyle(color: _sesResult!.startsWith('Error') ? AppColors.danger : AppColors.success, fontSize: 13)),
+                  ],
                 ],
               ),
             ),
@@ -78,7 +116,7 @@ class PropertyDetailScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: OutlinedButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/properties/edit', arguments: property),
+              onPressed: () => Navigator.pushNamed(context, '/properties/edit', arguments: widget.property),
               icon: const Icon(Icons.edit_outlined),
               label: Text(l.translate('common.edit')),
               style: OutlinedButton.styleFrom(fixedSize: const Size.fromHeight(44)),

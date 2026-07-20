@@ -106,11 +106,11 @@ class SesService
         return $this->send($submission);
     }
 
-    public function ping(): array
+    public function ping(?Property $property = null): array
     {
-        $soapBody = $this->buildSoapEnvelope('', 'C');
+        $soapBody = $this->buildSoapEnvelope('', 'C', property: $property);
 
-        $response = $this->soapHttpCall($soapBody);
+        $response = $this->soapHttpCall($soapBody, $property);
 
         if (!$response['success']) {
             return $response;

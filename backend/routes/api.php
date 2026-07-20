@@ -55,6 +55,7 @@ Route::name('api.v1.')->group(function () {
 
             Route::get('/ses/submissions', [SesController::class, 'index'])->name('ses.index');
             Route::post('/ses/prepare/{reservation}', [SesController::class, 'prepare'])->name('ses.prepare');
+            Route::post('/ses/test/{property}', [SesController::class, 'test'])->name('ses.test');
             Route::post('/ses/submissions/{submission}/send', [SesController::class, 'send'])->name('ses.send');
             Route::post('/ses/submissions/{submission}/retry', [SesController::class, 'retry'])->name('ses.retry');
             Route::post('/ses/export', [SesController::class, 'export'])->name('ses.export');

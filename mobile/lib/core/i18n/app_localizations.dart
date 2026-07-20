@@ -185,7 +185,6 @@ class AppLocalizations {
     'user.operator': 'Operador',
 
     'setting.title': 'Ajustes',
-    'setting.ses_test': 'Probar SES',
     'setting.company': 'Datos de la empresa',
     'setting.language': 'Idioma',
 
@@ -362,7 +361,6 @@ class AppLocalizations {
     'user.operator': 'Operator',
 
     'setting.title': 'Settings',
-    'setting.ses_test': 'Test SES',
     'setting.company': 'Company data',
     'setting.language': 'Language',
 
