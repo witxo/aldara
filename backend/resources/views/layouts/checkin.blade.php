@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="{{ asset('images/logo_aldara.png') }}">
     <title>Check-in Online — {{ config('app.name') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         .step-indicator { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }

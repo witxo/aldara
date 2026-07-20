@@ -4,6 +4,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/i18n/app_localizations.dart';
 import '../../../core/api/api_client.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../widgets/document_scanner.dart';
+import '../widgets/spanish_id_parser.dart';
 
 class GuestFormScreen extends StatefulWidget {
   final int? reservationId;
@@ -50,6 +52,24 @@ class _GuestFormScreenState extends State<GuestFormScreen> {
     _phone.dispose(); _parentesco.dispose(); _address.dispose();
     _city.dispose(); _postalCode.dispose();
     super.dispose();
+  }
+
+  void _onScanResult(IdParseResult result) {
+    setState(() {
+      if (result.documentType != null) _docType = result.documentType!;
+      if (result.documentNumber != null) _docNumber.text = result.documentNumber!;
+      if (result.firstName != null) _firstName.text = result.firstName!;
+      if (result.lastName != null) _lastName.text = result.lastName!;
+      if (result.nationality != null) _nationality.text = result.nationality!;
+      if (result.birthDate != null) _birthDate.text = result.birthDate!;
+      if (result.gender != null) _gender = result.gender!;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Datos rellenados desde el documento. Revísalos antes de guardar.'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   Future<void> _save() async {
@@ -99,6 +119,7 @@ class _GuestFormScreenState extends State<GuestFormScreen> {
           key: _formKey,
           child: Column(
             children: [
+              DocumentScannerWidget(onResult: _onScanResult),
               Row(children: [
                 Expanded(child: TextFormField(controller: _firstName, decoration: const InputDecoration(labelText: 'Nombre'), validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null)),
                 const SizedBox(width: 12),
