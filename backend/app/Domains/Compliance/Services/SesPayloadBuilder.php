@@ -14,7 +14,13 @@ class SesPayloadBuilder
     {
         $xml = $this->xmlBuilder->buildAltaPartesViajeros($reservation, $guestsData);
 
-        $zipped = gzencode($xml, 9);
+        $zip = new \ZipArchive();
+        $tmpFile = tempnam(sys_get_temp_dir(), 'ses_');
+        $zip->open($tmpFile, \ZipArchive::CREATE);
+        $zip->addFromString('comunicacion.xml', $xml);
+        $zip->close();
+        $zipped = file_get_contents($tmpFile);
+        unlink($tmpFile);
         $base64 = base64_encode($zipped);
 
         $property = $reservation->property;

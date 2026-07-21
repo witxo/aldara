@@ -109,13 +109,11 @@ class SesService
     public function ping(?Property $property = null): array
     {
         $consultXml = '<?xml version="1.0" encoding="UTF-8"?>
-<con:consulta xmlns:con="http://www.neg.hospedajes.mir.es/consultarComunicacion">
-    <con:fechaDesde>20260101</con:fechaDesde>
-    <con:fechaHasta>20261231</con:fechaHasta>
-</con:consulta>';
+<con:lotes xmlns:con="http://www.neg.hospedajes.mir.es/consultarComunicacion">
+    <con:lote>00000000-0000-0000-0000-000000000000</con:lote>
+</con:lotes>';
 
-        $zipped = gzencode($consultXml, 9);
-        $base64 = base64_encode($zipped);
+        $base64 = $this->compressXml($consultXml);
 
         $soapBody = $this->buildSoapEnvelope($base64, 'C', property: $property);
 
@@ -143,8 +141,7 @@ class SesService
     <con:lote>' . $lote . '</con:lote>
 </con:lotes>';
 
-        $zipped = gzencode($xml, 9);
-        $base64 = base64_encode($zipped);
+        $base64 = $this->compressXml($xml);
 
         $soapBody = $this->buildSoapEnvelope($base64, 'C');
 
@@ -193,6 +190,20 @@ class SesService
             'error' => $parsed['descripcion'],
             'raw' => $response['body'],
         ];
+    }
+
+    protected function compressXml(string $xml): string
+    {
+        $zip = new \ZipArchive();
+        $tmpFile = tempnam(sys_get_temp_dir(), 'ses_');
+        if ($zip->open($tmpFile, \ZipArchive::CREATE) !== true) {
+            throw new \RuntimeException('No se pudo crear archivo ZIP temporal');
+        }
+        $zip->addFromString('comunicacion.xml', $xml);
+        $zip->close();
+        $data = file_get_contents($tmpFile);
+        unlink($tmpFile);
+        return base64_encode($data);
     }
 
     protected function buildSoapEnvelope(string $solicitudBase64, string $tipoOperacion, string $tipoComunicacion = '', ?Property $property = null): string

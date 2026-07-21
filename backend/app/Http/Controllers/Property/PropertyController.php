@@ -104,13 +104,13 @@ class PropertyController extends Controller
             if (!empty($result['codigo'])) {
                 $error = "Código {$result['codigo']}: {$error}";
             }
-            if (empty($error) && !empty($result['raw'])) {
-                $error = 'Respuesta XML: ' . htmlspecialchars(substr($result['raw'], 0, 1500));
-            }
-            if (empty($error) && !empty($result['soap_request'])) {
-                $error = 'Petición XML: ' . htmlspecialchars(substr($result['soap_request'], 0, 500));
-            }
-            return redirect()->route('properties.show', $property)->with('error', 'Error SES: ' . ($error ?: 'Error de conexión'));
+            $soapPreview = !empty($result['soap_request'])
+                ? ' | Petición: ' . htmlspecialchars(substr($result['soap_request'], 0, 800))
+                : '';
+            $rawPreview = !empty($result['raw'])
+                ? ' | Respuesta: ' . htmlspecialchars(substr($result['raw'], 0, 800))
+                : '';
+            return redirect()->route('properties.show', $property)->with('error', 'Error SES: ' . ($error ?: 'Error de conexión') . $soapPreview . $rawPreview);
         }
 
         return redirect()->route('properties.show', $property)->with('success', 'Conexión SES exitosa. Código: ' . $result['codigo']);

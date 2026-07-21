@@ -28,8 +28,6 @@ class SesXmlBuilder
             ? $this->buildGuestsFromRequest($guestsData, $reservation)
             : $this->buildGuestsFromModel($reservation);
 
-        $mainGuest = $reservation->guests()->where('is_main_guest', true)->first();
-
         foreach ($guests as $index => $guestData) {
             $comunicacion = $dom->createElement('comunicacion');
             $solicitud->appendChild($comunicacion);
@@ -47,12 +45,18 @@ class SesXmlBuilder
                 $this->appendElement($contrato, 'numHabitaciones', '1');
             }
 
+            $this->appendElement($contrato, 'internet', 'false');
+
             $pago = $dom->createElement('pago');
             $contrato->appendChild($pago);
             $this->appendElement($pago, 'tipoPago', 'OTRO');
+            $this->appendElement($pago, 'fechaPago', $reservation->created_at->format('Y-m-d'));
 
             $persona = $dom->createElement('persona');
             $comunicacion->appendChild($persona);
+
+            $rol = $index === 0 ? 'RE' : 'VI';
+            $this->appendElement($persona, 'rol', $rol);
 
             $this->appendElement($persona, 'nombre', $guestData['nombre']);
             $this->appendElement($persona, 'apellido1', $guestData['apellido1']);
