@@ -108,7 +108,16 @@ class SesService
 
     public function ping(?Property $property = null): array
     {
-        $soapBody = $this->buildSoapEnvelope('', 'C', property: $property);
+        $consultXml = '<?xml version="1.0" encoding="UTF-8"?>
+<con:consulta xmlns:con="http://www.neg.hospedajes.mir.es/consultarComunicacion">
+    <con:fechaDesde>20260101</con:fechaDesde>
+    <con:fechaHasta>20261231</con:fechaHasta>
+</con:consulta>';
+
+        $zipped = gzencode($consultXml, 9);
+        $base64 = base64_encode($zipped);
+
+        $soapBody = $this->buildSoapEnvelope($base64, 'C', property: $property);
 
         $response = $this->soapHttpCall($soapBody, $property);
 
