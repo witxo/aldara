@@ -100,7 +100,17 @@ class PropertyController extends Controller
         $result = $sesService->ping($property);
 
         if (!$result['success']) {
-            return redirect()->route('properties.show', $property)->with('error', 'Error SES: ' . ($result['descripcion'] ?? 'Error de conexión'));
+            $error = $result['descripcion'] ?? '';
+            if (!empty($result['codigo'])) {
+                $error = "Código {$result['codigo']}: {$error}";
+            }
+            if (empty($error) && !empty($result['raw'])) {
+                $error = 'Respuesta XML: ' . htmlspecialchars(substr($result['raw'], 0, 1500));
+            }
+            if (empty($error) && !empty($result['soap_request'])) {
+                $error = 'Petición XML: ' . htmlspecialchars(substr($result['soap_request'], 0, 500));
+            }
+            return redirect()->route('properties.show', $property)->with('error', 'Error SES: ' . ($error ?: 'Error de conexión'));
         }
 
         return redirect()->route('properties.show', $property)->with('success', 'Conexión SES exitosa. Código: ' . $result['codigo']);

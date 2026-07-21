@@ -123,6 +123,7 @@ class SesService
             'codigo' => $parsed['codigo'],
             'descripcion' => $parsed['descripcion'],
             'raw' => $response['body'],
+            'soap_request' => $soapBody,
         ];
     }
 
@@ -268,22 +269,43 @@ XML;
             $dom->loadXML($xml);
 
             $xpath = new \DOMXPath($dom);
-            $xpath->registerNamespace('ns3', 'http://www.soap.servicios.hospedajes.mir.es/comunicacion');
 
-            $codigoNode = $xpath->query('//ns3:comunicacionResponse/ns3:respuesta/ns3:codigoRetorno');
+            $namespaces = $xpath->query('namespace::*');
+            $registered = false;
+            foreach ($namespaces as $ns) {
+                if (str_contains($ns->nodeValue, 'hospedajes.mir.es')) {
+                    $xpath->registerNamespace('ns', $ns->nodeValue);
+                    $registered = true;
+                    break;
+                }
+            }
+            if (!$registered) {
+                $xpath->registerNamespace('ns', 'http://www.soap.servicios.hospedajes.mir.es/comunicacion');
+            }
+
+            $codigoNode = $xpath->query('//ns:comunicacionResponse/ns:respuesta/ns:codigoRetorno');
             if ($codigoNode->length === 0) {
-                $codigoNode = $xpath->query('//ns3:comunicacionResponse/ns3:respuesta/ns3:codigo');
+                $codigoNode = $xpath->query('//ns:comunicacionResponse/ns:respuesta/ns:codigo');
+            }
+            if ($codigoNode->length === 0) {
+                $codigoNode = $xpath->query('//*[local-name()="comunicacionResponse"]//*[local-name()="codigoRetorno" or local-name()="codigo"]');
             }
             if ($codigoNode->length > 0) {
                 $result['codigo'] = (int) $codigoNode->item(0)->nodeValue;
             }
 
-            $descNode = $xpath->query('//ns3:comunicacionResponse/ns3:respuesta/ns3:descripcion');
+            $descNode = $xpath->query('//ns:comunicacionResponse/ns:respuesta/ns:descripcion');
+            if ($descNode->length === 0) {
+                $descNode = $xpath->query('//*[local-name()="descripcion"]');
+            }
             if ($descNode->length > 0) {
                 $result['descripcion'] = $descNode->item(0)->nodeValue;
             }
 
-            $loteNode = $xpath->query('//ns3:comunicacionResponse/ns3:respuesta/ns3:lote');
+            $loteNode = $xpath->query('//ns:comunicacionResponse/ns:respuesta/ns:lote');
+            if ($loteNode->length === 0) {
+                $loteNode = $xpath->query('//*[local-name()="lote"]');
+            }
             if ($loteNode->length > 0) {
                 $result['lote'] = $loteNode->item(0)->nodeValue;
             }
