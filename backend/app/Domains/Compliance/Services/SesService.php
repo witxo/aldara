@@ -227,13 +227,18 @@ XML;
             return ['success' => false, 'error' => 'SES_USERNAME o SES_PASSWORD no configurados'];
         }
 
-        $response = Http::timeout(config('ses.timeout', 60))
+        $http = Http::timeout(config('ses.timeout', 60))
             ->withBasicAuth($username, $password)
             ->withHeaders([
                 'Content-Type' => 'text/xml; charset=utf-8',
                 'SOAPAction' => '',
-            ])
-            ->send('POST', $endpoint, ['body' => $soapBody]);
+            ]);
+
+        if (!config('ses.verify_ssl')) {
+            $http->withoutVerifying();
+        }
+
+        $response = $http->send('POST', $endpoint, ['body' => $soapBody]);
 
         if ($response->failed()) {
             return [

@@ -1,0 +1,9 @@
+.idea/
+*.iml
+.DS_Store
+Flutter/Generated.xcconfig
+Flutter/ephemeral/
+Flutter/flutter_export_environment.sh
+Pods/
+Podfile.lock
+Runner/GeneratedPluginRegistrant.*

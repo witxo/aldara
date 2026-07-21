@@ -10,6 +10,7 @@ return [
     'endpoint_produccion' => 'https://hospedajes.ses.mir.es/hospedajes-web/ws/v1/comunicacion',
     'endpoint' => env('SES_ENDPOINT'),
     'timeout' => (int) env('SES_TIMEOUT', 30),
+    'verify_ssl' => env('SES_VERIFY_SSL', true),
     'retry' => [
         'max_attempts' => 3,
         'delay_minutes' => 60,
