@@ -24,10 +24,15 @@ class ReservationController extends Controller
             });
         }
 
-        $reservations = $query->orderBy('checkin_date', 'desc')->paginate(20);
+        $sortable = ['code', 'guest_name', 'checkin_date', 'checkout_date', 'source', 'status', 'created_at'];
+        $sort = in_array($request->sort, $sortable) ? $request->sort : 'checkin_date';
+        $direction = in_array($request->direction, ['asc', 'desc']) ? $request->direction : 'asc';
+
+        $query->orderBy($sort, $direction);
+        $reservations = $query->paginate(20)->appends($request->only(['sort', 'direction', 'search', 'status', 'property_id']));
         $properties = Property::where('tenant_id', tenant_id())->get();
 
-        return view('panels.reservations.index', compact('reservations', 'properties'));
+        return view('panels.reservations.index', compact('reservations', 'properties', 'sort', 'direction'));
     }
 
     public function create()

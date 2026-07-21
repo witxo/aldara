@@ -15,19 +15,22 @@
                 <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
                 @endforeach
             </select>
+            <input type="hidden" name="sort" value="{{ $sort }}">
+            <input type="hidden" name="direction" value="{{ $direction }}">
             <button type="submit" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm">Filtrar</button>
         </form>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead><tr class="text-left text-gray-500 border-b bg-gray-50">
-                <th class="p-3">Código</th>
-                <th class="p-3">Huésped</th>
+                @php $th = fn($col, $label) => '<th class="p-3"><a href="' . e(request()->fullUrlWithQuery(['sort' => $col, 'direction' => $sort === $col && $direction === 'asc' ? 'desc' : 'asc'])) . '" class="hover:text-gray-800">' . $label . ($sort === $col ? ($direction === 'asc' ? ' ↑' : ' ↓') : '') . '</a></th>'; @endphp
+                {!! $th('code', 'Código') !!}
+                {!! $th('guest_name', 'Huésped') !!}
                 <th class="p-3">Alojamiento</th>
-                <th class="p-3">Entrada</th>
-                <th class="p-3">Salida</th>
-                <th class="p-3">Origen</th>
-                <th class="p-3">Estado</th>
+                {!! $th('checkin_date', 'Entrada') !!}
+                {!! $th('checkout_date', 'Salida') !!}
+                {!! $th('source', 'Origen') !!}
+                {!! $th('status', 'Estado') !!}
                 <th class="p-3"></th>
             </tr></thead>
             <tbody>
