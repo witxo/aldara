@@ -344,12 +344,18 @@ document.addEventListener('alpine:init', function () {
       },
 
       uploadFile: function (event) {
-        var file = event.target.files ? event.target.files[0] : null;
-        if (!file) return;
+        logger('uploadFile called', event ? event.type : 'no event');
+        var file = event && event.target && event.target.files ? event.target.files[0] : null;
+        if (!file) {
+          logger('uploadFile: no file selected');
+          return;
+        }
+        logger('uploadFile: file selected', file.name, file.type, file.size);
 
         this._resetSession();
         this.showCamera = false;
         this.status = 'processing';
+        logger('uploadFile: status set to processing');
         var self = this;
 
         var img = new Image();
