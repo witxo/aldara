@@ -54,7 +54,7 @@ var MRZParser = {
     if (raw.length < 40) return null;
 
     var idx = -1;
-    ['IDESP', 'I<ESP', '1DESP', '1<ESP'].forEach(function(p) {
+    ['IDESP', 'I<ESP', '1DESP', '1<ESP', 'DESP'].forEach(function(p) {
       if (idx < 0) idx = raw.indexOf(p);
     });
 
@@ -67,22 +67,31 @@ var MRZParser = {
       if (m && raw.length > m.index + 60) idx = m.index;
     }
     if (idx < 0) {
+      var m = raw.match(/[A-Z]ESP/);
+      if (m && m.index > 0 && raw.length > m.index + 60) idx = m.index;
+    }
+    if (idx < 0) {
       var pm = raw.match(/P<[A-Z]{3}/);
       if (pm && raw.length > pm.index + 44) idx = pm.index;
     }
     if (idx < 0) return null;
 
-    var block = raw.substring(idx, idx + 90);
-    if (/^I/.test(block) && block.length >= 80) {
-      var l1 = block.substring(0, 30);
-      var l2 = block.substring(30, 60);
-      var l3 = block.substring(60, 90);
-      return { format: 'TD1', lines: [l1, l2, l3] };
-    }
-    if (/^P/.test(block) && block.length >= 80) {
-      var p1 = block.substring(0, 44);
-      var p2 = block.substring(44, 88);
-      return { format: 'TD3', lines: [p1, p2] };
+    var block = raw.substring(idx, idx + 92);
+    var skipI = /^[^I]/.test(block);
+    if (skipI) block = 'I' + block;
+
+    if (block.length >= 80) {
+      if (/^I/.test(block)) {
+        var l1 = block.substring(0, 30);
+        var l2 = block.substring(30, 60);
+        var l3 = block.substring(60, 90);
+        return { format: 'TD1', lines: [l1, l2, l3] };
+      }
+      if (/^P/.test(block)) {
+        var p1 = block.substring(0, 44);
+        var p2 = block.substring(44, 88);
+        if (p2.length >= 40) return { format: 'TD3', lines: [p1, p2] };
+      }
     }
 
     return null;
@@ -92,16 +101,23 @@ var MRZParser = {
     for (var i = 0; i < Math.min(lines.length, 5); i++) {
       var l0 = lines[i];
       if (!l0 || l0.length < 15) continue;
+      var l0fixed = l0;
 
-      if (/^I[<A-Z0-9]/.test(l0)) {
+      if (!/^[IP]/.test(l0) && l0.length >= 3 && l0.substring(1, 4) === 'ESP') {
+        l0fixed = 'I' + l0;
+      }
+
+      if (/^I[<A-Z0-9]/.test(l0fixed)) {
         if (i + 2 < lines.length &&
             lines[i + 1] && lines[i + 1].length >= 20 &&
             lines[i + 2] && lines[i + 2].length >= 20) {
+          lines[i] = l0fixed;
           return 'TD1';
         }
         if (i + 1 < lines.length &&
             lines[i + 1] && lines[i + 1].length >= 30 &&
             lines[i + 1].length < 40) {
+          lines[i] = l0fixed;
           return 'TD2';
         }
       }
@@ -116,12 +132,18 @@ var MRZParser = {
 
     if (lines.length >= 3) {
       var joined = lines.slice(0, 3).join('');
-      if (joined.length >= 70 && /^I/.test(lines[0])) return 'TD1';
+      if (joined.length >= 70) {
+        var first = lines[0];
+        if (/^[A-Z]ESP/.test(first)) first = 'I' + first;
+        if (/^I/.test(first)) return 'TD1';
+      }
     }
     if (lines.length >= 2) {
       var j2 = lines.slice(0, 2).join('');
       if (/^P/.test(lines[0]) && j2.length >= 70) return 'TD3';
-      if (/^I/.test(lines[0]) && j2.length >= 60) return 'TD2';
+      var first2 = lines[0];
+      if (/^[A-Z]ESP/.test(first2)) first2 = 'I' + first2;
+      if (/^I/.test(first2) && j2.length >= 60) return 'TD2';
     }
 
     return null;
@@ -143,6 +165,18 @@ var MRZParser = {
     var l1 = this._cleanMrzLine(lines[0] || '');
     var l2 = this._cleanMrzLine(lines[1] || '');
     var l3 = this._cleanMrzLine(lines[2] || '');
+
+    l1 = l1.replace(/^[^I1P]/, 'I');
+
+    // If l2 ends with SKL noise from line boundary, strip it
+    var boundaryNoise = lines[1] ? (lines[1].match(/[SKL]$/) || [null])[0] : null;
+    if (boundaryNoise) {
+      l2 = l2.replace(/[SKL]+$/, '');
+    }
+    // If l3 starts with the SAME boundary noise char (duplicated at split point), strip one
+    if (boundaryNoise && l3.charAt(0) === boundaryNoise) {
+      l3 = l3.substring(1);
+    }
 
     var docType = l1.charAt(0);
     var docType2 = l1.length > 1 ? l1.charAt(1) : '';
@@ -302,12 +336,10 @@ var MRZParser = {
   _precleanNameLine: function (raw) {
     var s = raw || '';
     s = s
-      .replace(/SK/g, '<').replace(/KS/g, '<')
-      .replace(/SL/g, '<').replace(/LS/g, '<')
+      .replace(/SS/g, '<<')
       .replace(/[KL]{2,}/g, '<<')
       .replace(/<[KL]/g, '<<')
-      .replace(/[KL]</g, '<<')
-      .replace(/^[KL]+/, '')
+      .replace(/([A-Z]{3,})([SKL]{2,})([A-Z]{3,})/g, '$1<<$3')
       .replace(/[KL]+$/, '');
     return s;
   },
@@ -367,7 +399,7 @@ var MRZParser = {
 
     words = words.map(function(w) {
       if (w.length >= 4 && /[AEIOU]/i.test(w)) {
-        w = w.replace(/^[KL]+/g, '').replace(/[KL]+$/g, '');
+        w = w.replace(/[KL]+$/g, '');
       }
       return w;
     }).filter(function(w) {
