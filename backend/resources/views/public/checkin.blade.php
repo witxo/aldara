@@ -39,37 +39,19 @@
         <form method="POST" action="{{ route('public.checkin.submit', $reservation->checkin_token) }}" class="space-y-6">
             @csrf
             <div id="guests-container">
-                <div class="mb-6 p-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-semibold text-blue-700">📷 Escanear DNI / Pasaporte</span>
-                        <span class="text-xs text-blue-500">Los datos se rellenarán automáticamente</span>
-                    </div>
-                    <p class="text-xs text-blue-600 mb-3">Tus datos no salen de tu dispositivo. El escaneo se procesa localmente.</p>
-                    <div class="flex gap-3">
-                        <button type="button" onclick="openCamera()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition flex items-center gap-2">
-                            <span>📸</span> Capturar con cámara
-                        </button>
-                        <button type="button" onclick="document.getElementById('gallery-input').click()" class="bg-white text-blue-600 border border-blue-300 px-4 py-2 rounded-lg text-sm hover:bg-blue-100 transition flex items-center gap-2">
-                            <span>🖼️</span> Seleccionar foto
-                        </button>
-                    </div>
-                    <input id="gallery-input" type="file" accept="image/*" class="hidden" onchange="scanDocument(this.files[0], getFieldMappings())">
-                    <div id="scan-status" class="mt-2 text-xs text-gray-500 hidden"></div>
-                </div>
-
                 <h3 class="font-semibold mb-3">Datos del viajero principal</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nombre *</label>
-                        <input type="text" name="guests[0][first_name]" id="g-first_name" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="guests[0][first_name]" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Apellidos *</label>
-                        <input type="text" name="guests[0][last_name]" id="g-last_name" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="guests[0][last_name]" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Tipo documento *</label>
-                        <select name="guests[0][document_type]" id="g-document_type" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <select name="guests[0][document_type]" id="doc-type-select" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="dni">DNI</option>
                             <option value="nie">NIE</option>
                             <option value="passport">Pasaporte</option>
@@ -77,11 +59,17 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nº documento *</label>
-                        <input type="text" name="guests[0][document_number]" id="g-document_number" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="guests[0][document_number]" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="button" id="scan-btn" onclick="openScanner(document.getElementById('doc-type-select').value, 'guests[0]')" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-purple-700 transition">
+                            Escanear DNI (parte trasera)
+                        </button>
+                        <p class="text-xs text-gray-400 mt-1">La cámara escaneará automáticamente el MRZ. Para DNI use la parte trasera.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nacionalidad *</label>
-                        <select name="guests[0][nationality]" id="g-nationality" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <select name="guests[0][nationality]" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="ES">España</option>
                             <option value="FR">Francia</option>
                             <option value="GB">Reino Unido</option>
@@ -93,15 +81,15 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Fecha de nacimiento</label>
-                        <input type="date" name="guests[0][birth_date]" id="g-birth_date" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="date" name="guests[0][birth_date]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" name="guests[0][email]" id="g-email" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="email" name="guests[0][email]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Teléfono</label>
-                        <input type="tel" name="guests[0][phone]" id="g-phone" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="tel" name="guests[0][phone]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                 </div>
             </div>
@@ -146,22 +134,40 @@
 @endsection
 
 @push('head')
-<script src="{{ asset('js/scanner.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="{{ asset('js/mrz-scanner.js') }}"></script>
+<style>
+    #mrz-modal video { transform: scaleX(-1); }
+</style>
 @endpush
 
 @push('scripts')
-<div id="camera-modal" class="fixed inset-0 bg-black z-50 hidden flex flex-col">
-    <video id="camera-preview" class="flex-1 w-full object-cover"></video>
-    <div class="absolute bottom-8 left-0 right-0 flex justify-center gap-6">
-        <button type="button" onclick="capturePhoto()" class="bg-white rounded-full w-16 h-16 shadow-lg flex items-center justify-center text-2xl hover:bg-gray-100 transition">📸</button>
-        <button type="button" onclick="closeCamera()" class="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:bg-red-700 transition">Cancelar</button>
-    </div>
-</div>
 <script>
-    window.SCAN_FIELD_PREFIX = 'guests[0][';
-    window.SCAN_FIELD_SUFFIX = ']';
-    let guestCount = 1;
+    document.getElementById('doc-type-select').addEventListener('change', function() {
+        const btn = document.getElementById('scan-btn');
+        if (this.value === 'dni') {
+            btn.textContent = 'Escanear DNI (parte trasera)';
+        } else if (this.value === 'passport') {
+            btn.textContent = 'Escanear Pasaporte';
+        } else {
+            btn.textContent = 'Escanear documento';
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            return;
+        }
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    });
 
+    function openScanner(docType, formPrefix) {
+        if (window.mrzScanner) {
+            window.mrzScanner.closeCamera();
+        }
+        window.mrzScanner = new MRZScanner({ formPrefix: formPrefix || 'guests[0]' });
+        window.mrzScanner.openCamera(docType);
+    }
+
+    let guestCount = 1;
     const maxGuests = {{ config('checkin.max_guests', 20) }};
     const totalGuests = {{ $reservation->adults + $reservation->children }};
 
