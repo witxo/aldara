@@ -19,12 +19,12 @@ rsync -a --delete \
 
 echo "=== Installing PHP dependencies ==="
 cd "$WEB_DIR"
-php composer.phar install --no-dev --no-interaction 2>/dev/null || composer install --no-dev --no-interaction
+/opt/plesk/php/8.3/bin/php composer.phar install --no-dev --no-interaction
 
 echo "=== Clearing Laravel caches ==="
-php artisan route:clear
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
+/opt/plesk/php/8.3/bin/php artisan route:clear
+/opt/plesk/php/8.3/bin/php artisan config:clear
+/opt/plesk/php/8.3/bin/php artisan cache:clear
+/opt/plesk/php/8.3/bin/php artisan view:clear
 
 echo "=== Done ==="
