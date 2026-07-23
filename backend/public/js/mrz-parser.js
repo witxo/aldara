@@ -1,395 +1,417 @@
 (function () {
-'use strict';
+    'use strict';
 
-var MRZParser = {
-  parse: function (text) {
-    if (!text || text.length < 30) return null;
+    var MRZParser = {
+        parse: function (text) {
+            if (!text) return null;
 
-    var lines = this._extractLines(text);
-    var format = lines ? this._detectFormat(lines) : null;
+            var candidates = this._extractCandidateLines(text);
+            if (!candidates.length) return null;
 
-    if (!format) {
-      var found = this._findMrzInText(text);
-      if (found) { format = found.format; lines = found.lines; }
-    }
+            var best = null;
 
-    if (!format || !lines) return null;
+            for (var i = 0; i < candidates.length; i++) {
+                var parsed = this._parseCandidate(candidates[i]);
+                if (!parsed) continue;
 
-    var record;
-    if (format === 'TD1') record = this._parseTD1(lines);
-    else if (format === 'TD2') record = this._parseTD2(lines);
-    else if (format === 'TD3') record = this._parseTD3(lines);
-    if (!record) return null;
+                parsed.confidence = this._calculateConfidence(parsed);
 
-    record = this._validateCheckDigits(record);
-    record.confidence = this._calculateConfidence(record);
-    return record;
-  },
+                if (!best || parsed.confidence > best.confidence) {
+                    best = parsed;
+                }
+            }
 
-  _extractLines: function (text) {
-    var raw = text.toUpperCase();
-    var lines = raw.split('\n').map(function (l) {
-      return l.replace(/[^A-Z0-9<]/g, '');
-    }).filter(function (l) {
-      return l.length > 10;
-    });
-    if (lines.length >= 2) return lines;
+            if (!best) return null;
 
-    var compressed = raw.replace(/[^A-Z0-9<\n]/g, '');
-    var alt = compressed.split('\n').filter(function (l) {
-      return l.length > 10;
-    });
-    if (alt.length >= 2) return alt;
+            if (best.surname) best.surname = this._cleanPersonName(best.surname);
+            if (best.givenNames) best.givenNames = this._cleanPersonName(best.givenNames);
 
-    var fixed = raw.replace(/\s+/g, '').split('\n').filter(function (l) {
-      return l.length > 10;
-    });
-    if (fixed.length >= 2) return fixed;
+            if (!best.surname && !best.givenNames) return null;
 
-    return null;
-  },
+            return best;
+        },
 
-  _findMrzInText: function (text) {
-    var raw = text.toUpperCase().replace(/[^A-Z0-9<]/g, '');
-    if (raw.length < 40) return null;
+        _extractCandidateLines: function (text) {
+            var rawLines = String(text)
+                .toUpperCase()
+                .split(/\r?\n/)
+                .map(function (line) {
+                    return line.replace(/[^A-Z0-9<]/g, '');
+                })
+                .filter(function (line) {
+                    return line.length >= 20;
+                });
 
-    var idx = -1;
-    ['IDESP', 'I<ESP', '1DESP', '1<ESP'].forEach(function(p) {
-      if (idx < 0) idx = raw.indexOf(p);
-    });
+            var candidates = [];
+            var i;
 
-    if (idx < 0) {
-      var m = raw.match(/I[D<][A-Z]{3}/);
-      if (m && raw.length > m.index + 60) idx = m.index;
-    }
-    if (idx < 0) {
-      var m = raw.match(/1[D<][A-Z]{3}/);
-      if (m && raw.length > m.index + 60) idx = m.index;
-    }
-    if (idx < 0) {
-      var pm = raw.match(/P<[A-Z]{3}/);
-      if (pm && raw.length > pm.index + 44) idx = pm.index;
-    }
-    if (idx < 0) return null;
+            for (i = 0; i < rawLines.length; i++) {
+                rawLines[i] = this._normalizeOcrLine(rawLines[i]);
+            }
 
-    var block = raw.substring(idx, idx + 90);
-    if (/^I/.test(block) && block.length >= 80) {
-      var l1 = block.substring(0, 30);
-      var l2 = block.substring(30, 60);
-      var l3 = block.substring(60, 90);
-      return { format: 'TD1', lines: [l1, l2, l3] };
-    }
-    if (/^P/.test(block) && block.length >= 80) {
-      var p1 = block.substring(0, 44);
-      var p2 = block.substring(44, 88);
-      return { format: 'TD3', lines: [p1, p2] };
-    }
+            for (i = 0; i + 2 < rawLines.length; i++) {
+                var a = rawLines[i];
+                var b = rawLines[i + 1];
+                var c = rawLines[i + 2];
 
-    return null;
-  },
+                if (a.length >= 25 && b.length >= 25 && c.length >= 25 && /^[IAC]/.test(a)) {
+                    candidates.push([this._fit(a, 30), this._fit(b, 30), this._fit(c, 30)]);
+                }
+            }
 
-  _detectFormat: function (lines) {
-    for (var i = 0; i < Math.min(lines.length, 5); i++) {
-      var l0 = lines[i];
-      if (!l0 || l0.length < 15) continue;
+            for (i = 0; i + 1 < rawLines.length; i++) {
+                var l1 = rawLines[i];
+                var l2 = rawLines[i + 1];
 
-      if (/^I[<A-Z0-9]/.test(l0)) {
-        if (i + 2 < lines.length &&
-            lines[i + 1] && lines[i + 1].length >= 20 &&
-            lines[i + 2] && lines[i + 2].length >= 20) {
-          return 'TD1';
+                if (/^P</.test(l1) && l1.length >= 35 && l2.length >= 35) {
+                    candidates.push([this._fit(l1, 44), this._fit(l2, 44)]);
+                }
+
+                if (/^[IAC]/.test(l1) && l1.length >= 30 && l2.length >= 30 && l1.length < 44 && l2.length < 44) {
+                    candidates.push([this._fit(l1, 36), this._fit(l2, 36)]);
+                }
+            }
+
+            var compact = String(text).toUpperCase().replace(/[^A-Z0-9<]/g, '');
+            compact = this._normalizeOcrLine(compact);
+
+            var idxP = compact.indexOf('P<');
+            while (idxP !== -1 && idxP + 88 <= compact.length) {
+                candidates.push([
+                    compact.slice(idxP, idxP + 44),
+                    compact.slice(idxP + 44, idxP + 88)
+                ]);
+                idxP = compact.indexOf('P<', idxP + 1);
+            }
+
+            var prefixes = ['I<', 'A<', 'C<', 'ID', 'IA', 'IC'];
+            for (var p = 0; p < prefixes.length; p++) {
+                var idx = compact.indexOf(prefixes[p]);
+                while (idx !== -1 && idx + 90 <= compact.length) {
+                    candidates.push([
+                        this._fit(compact.slice(idx, idx + 30), 30),
+                        this._fit(compact.slice(idx + 30, idx + 60), 30),
+                        this._fit(compact.slice(idx + 60, idx + 90), 30)
+                    ]);
+                    idx = compact.indexOf(prefixes[p], idx + 1);
+                }
+            }
+
+            return candidates;
+        },
+
+        _parseCandidate: function (lines) {
+            if (lines.length === 3) {
+                return this._parseTD1(lines);
+            }
+
+            if (lines.length === 2) {
+                if ((lines[0] || '').length >= 40 || /^P</.test(lines[0] || '')) {
+                    return this._parseTD3(lines);
+                }
+
+                return this._parseTD2(lines);
+            }
+
+            return null;
+        },
+
+        _parseTD1: function (lines) {
+            var l1 = this._fit(lines[0], 30);
+            var l2 = this._fit(lines[1], 30);
+            var l3 = this._fit(lines[2], 30);
+
+            var names = this._splitNames(l3);
+            var rawDocumentNumber = l1.slice(5, 14);
+            var documentCheck = l1.charAt(14);
+            var birthRaw = l2.slice(0, 6);
+            var birthCheck = l2.charAt(6);
+            var sex = l2.charAt(7);
+            var expiryRaw = l2.slice(8, 14);
+            var expiryCheck = l2.charAt(14);
+            var nationality = l2.slice(15, 18);
+            var compositeRaw = l1.slice(5, 30) + l2.slice(0, 7) + l2.slice(8, 15) + l2.slice(18, 29);
+            var compositeCheck = l2.charAt(29);
+
+            var record = {
+                format: 'TD1',
+                docType: this._mapDocType(l1.charAt(0)),
+                issuingCountry: l1.slice(2, 5),
+                documentNumber: this._cleanDocumentNumber(rawDocumentNumber),
+                surname: names.surname,
+                givenNames: names.givenNames,
+                birthDate: this._parseDate(birthRaw),
+                expiryDate: this._parseDate(expiryRaw),
+                nationality: nationality.replace(/</g, ''),
+                sex: this._normalizeSex(sex),
+                checkDigits: {
+                    documentNumber: documentCheck,
+                    birthDate: birthCheck,
+                    expiryDate: expiryCheck,
+                    composite: compositeCheck
+                },
+                validation: {
+                    documentNumber: this._check(rawDocumentNumber, documentCheck),
+                    birthDate: this._check(birthRaw, birthCheck),
+                    expiryDate: this._check(expiryRaw, expiryCheck),
+                    composite: this._check(compositeRaw, compositeCheck)
+                }
+            };
+
+            record.documentNumberValid = record.validation.documentNumber;
+            record.birthDateValid = record.validation.birthDate;
+            record.expiryDateValid = record.validation.expiryDate;
+
+            return record;
+        },
+
+        _parseTD2: function (lines) {
+            var l1 = this._fit(lines[0], 36);
+            var l2 = this._fit(lines[1], 36);
+
+            var names = this._splitNames(l1.slice(5));
+            var rawDocumentNumber = l2.slice(0, 9);
+            var documentCheck = l2.charAt(9);
+            var nationality = l2.slice(10, 13);
+            var birthRaw = l2.slice(13, 19);
+            var birthCheck = l2.charAt(19);
+            var sex = l2.charAt(20);
+            var expiryRaw = l2.slice(21, 27);
+            var expiryCheck = l2.charAt(27);
+            var compositeRaw = l2.slice(0, 10) + l2.slice(13, 20) + l2.slice(21, 35);
+            var compositeCheck = l2.charAt(35);
+
+            var record = {
+                format: 'TD2',
+                docType: this._mapDocType(l1.charAt(0)),
+                issuingCountry: l1.slice(2, 5),
+                documentNumber: this._cleanDocumentNumber(rawDocumentNumber),
+                surname: names.surname,
+                givenNames: names.givenNames,
+                birthDate: this._parseDate(birthRaw),
+                expiryDate: this._parseDate(expiryRaw),
+                nationality: nationality.replace(/</g, ''),
+                sex: this._normalizeSex(sex),
+                checkDigits: {
+                    documentNumber: documentCheck,
+                    birthDate: birthCheck,
+                    expiryDate: expiryCheck,
+                    composite: compositeCheck
+                },
+                validation: {
+                    documentNumber: this._check(rawDocumentNumber, documentCheck),
+                    birthDate: this._check(birthRaw, birthCheck),
+                    expiryDate: this._check(expiryRaw, expiryCheck),
+                    composite: this._check(compositeRaw, compositeCheck)
+                }
+            };
+
+            record.documentNumberValid = record.validation.documentNumber;
+            record.birthDateValid = record.validation.birthDate;
+            record.expiryDateValid = record.validation.expiryDate;
+
+            return record;
+        },
+
+        _parseTD3: function (lines) {
+            var l1 = this._fit(lines[0], 44);
+            var l2 = this._fit(lines[1], 44);
+
+            var names = this._splitNames(l1.slice(5));
+            var rawDocumentNumber = l2.slice(0, 9);
+            var documentCheck = l2.charAt(9);
+            var nationality = l2.slice(10, 13);
+            var birthRaw = l2.slice(13, 19);
+            var birthCheck = l2.charAt(19);
+            var sex = l2.charAt(20);
+            var expiryRaw = l2.slice(21, 27);
+            var expiryCheck = l2.charAt(27);
+            var personalNumber = l2.slice(28, 42);
+            var personalCheck = l2.charAt(42);
+            var compositeRaw = l2.slice(0, 10) + l2.slice(13, 20) + l2.slice(21, 43);
+            var compositeCheck = l2.charAt(43);
+
+            var record = {
+                format: 'TD3',
+                docType: 'passport',
+                issuingCountry: l1.slice(2, 5),
+                documentNumber: this._cleanDocumentNumber(rawDocumentNumber),
+                surname: names.surname,
+                givenNames: names.givenNames,
+                birthDate: this._parseDate(birthRaw),
+                expiryDate: this._parseDate(expiryRaw),
+                nationality: nationality.replace(/</g, ''),
+                sex: this._normalizeSex(sex),
+                personalNumber: personalNumber.replace(/</g, ''),
+                checkDigits: {
+                    documentNumber: documentCheck,
+                    birthDate: birthCheck,
+                    expiryDate: expiryCheck,
+                    personalNumber: personalCheck,
+                    composite: compositeCheck
+                },
+                validation: {
+                    documentNumber: this._check(rawDocumentNumber, documentCheck),
+                    birthDate: this._check(birthRaw, birthCheck),
+                    expiryDate: this._check(expiryRaw, expiryCheck),
+                    personalNumber: this._check(personalNumber, personalCheck),
+                    composite: this._check(compositeRaw, compositeCheck)
+                }
+            };
+
+            record.documentNumberValid = record.validation.documentNumber;
+            record.birthDateValid = record.validation.birthDate;
+            record.expiryDateValid = record.validation.expiryDate;
+
+            return record;
+        },
+
+        _splitNames: function (raw) {
+            var clean = this._fit(raw || '', (raw || '').length).replace(/<+$/g, '');
+            var parts = clean.split('<<');
+            var surname = this._cleanPersonName(parts[0] || '');
+            var givenNames = this._cleanPersonName(parts.slice(1).join(' '));
+
+            return {
+                surname: surname,
+                givenNames: givenNames
+            };
+        },
+
+        _cleanPersonName: function (value) {
+            if (!value) return '';
+
+            var text = value
+                .replace(/</g, ' ')
+                .replace(/[^A-ZÁÉÍÓÚÜÑ\s'-]/gi, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            var tokens = text.split(' ').filter(Boolean);
+            var cleanTokens = [];
+
+            for (var i = 0; i < tokens.length; i++) {
+                var t = tokens[i];
+
+                if (/^[BCDFGHJKLMNPQRSTVWXYZ]{6,}$/.test(t)) continue;
+                if (/^(.)\1{2,}$/.test(t)) continue;
+                if (/^[A-Z]{1}$/.test(t) && tokens.length > 2) continue;
+                if (/^(KL|LK|LL|KK|XX|YY|ZZ){2,}$/i.test(t)) continue;
+
+                cleanTokens.push(t);
+            }
+
+            return cleanTokens.join(' ').substring(0, 60).trim();
+        },
+
+        _cleanDocumentNumber: function (raw) {
+            if (!raw) return '';
+
+            var normalized = raw
+                .replace(/</g, '')
+                .replace(/O/g, '0')
+                .replace(/Q/g, '0')
+                .replace(/I/g, '1')
+                .replace(/L/g, '1')
+                .replace(/Z/g, '2')
+                .replace(/S/g, '5')
+                .replace(/B/g, '8')
+                .replace(/G/g, '6')
+                .replace(/\s+/g, '');
+
+            return normalized.substring(0, 15);
+        },
+
+        _normalizeOcrLine: function (line) {
+            return String(line || '')
+                .toUpperCase()
+                .replace(/«|»/g, '<')
+                .replace(/K(?=<{2,})/g, '<')
+                .replace(/X(?=<{2,})/g, '<')
+                .replace(/[‘’`´]/g, '')
+                .replace(/ /g, '')
+                .replace(/[^A-Z0-9<]/g, '');
+        },
+
+        _fit: function (value, len) {
+            value = String(value || '');
+            if (value.length > len) return value.slice(0, len);
+            return value.padEnd(len, '<');
+        },
+
+        _mapDocType: function (ch) {
+            if (ch === 'P') return 'passport';
+            if (ch === 'I' || ch === 'A' || ch === 'C') return 'id';
+            return 'document';
+        },
+
+        _normalizeSex: function (value) {
+            if (value === 'M') return 'M';
+            if (value === 'F') return 'F';
+            return '';
+        },
+
+        _parseDate: function (raw) {
+            if (!raw || raw.length !== 6 || /[^0-9]/.test(raw)) return '';
+
+            var yy = parseInt(raw.slice(0, 2), 10);
+            var mm = parseInt(raw.slice(2, 4), 10);
+            var dd = parseInt(raw.slice(4, 6), 10);
+
+            if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return '';
+
+            var currentYear = new Date().getFullYear() % 100;
+            var fullYear = yy <= currentYear ? (2000 + yy) : (1900 + yy);
+
+            return fullYear + '-' +
+                String(mm).padStart(2, '0') + '-' +
+                String(dd).padStart(2, '0');
+        },
+
+        _charValue: function (ch) {
+            if (ch >= '0' && ch <= '9') return ch.charCodeAt(0) - 48;
+            if (ch >= 'A' && ch <= 'Z') return ch.charCodeAt(0) - 55;
+            return 0;
+        },
+
+        _calculateCheckDigit: function (input) {
+            var weights = [7, 3, 1];
+            var sum = 0;
+
+            for (var i = 0; i < input.length; i++) {
+                sum += this._charValue(input.charAt(i)) * weights[i % 3];
+            }
+
+            return String(sum % 10);
+        },
+
+        _check: function (raw, digit) {
+            if (!raw || !digit || /[^0-9]/.test(digit)) return null;
+            return this._calculateCheckDigit(raw) === digit;
+        },
+
+        _calculateConfidence: function (record) {
+            var score = 0;
+
+            if (record.validation.documentNumber === true) score += 0.30;
+            if (record.validation.birthDate === true) score += 0.20;
+            if (record.validation.expiryDate === true) score += 0.15;
+            if (record.validation.composite === true) score += 0.20;
+            if (record.surname) score += 0.07;
+            if (record.givenNames) score += 0.05;
+            if (record.nationality && record.nationality.length === 3) score += 0.03;
+
+            if (record.surname && /[BCDFGHJKLMNPQRSTVWXYZ]{7,}/.test(record.surname)) score -= 0.20;
+            if (record.givenNames && /[BCDFGHJKLMNPQRSTVWXYZ]{7,}/.test(record.givenNames)) score -= 0.20;
+            if (record.documentNumber && !/^[A-Z0-9]{5,15}$/.test(record.documentNumber)) score -= 0.20;
+            if (record.documentNumberValid === false) score -= 0.25;
+
+            if (score < 0) score = 0;
+            if (score > 1) score = 1;
+
+            return score;
         }
-        if (i + 1 < lines.length &&
-            lines[i + 1] && lines[i + 1].length >= 30 &&
-            lines[i + 1].length < 40) {
-          return 'TD2';
-        }
-      }
-
-      if (/^P[<A-Z]{2}/.test(l0) && l0.length >= 40) {
-        if (i + 1 < lines.length &&
-            lines[i + 1] && lines[i + 1].length >= 40) {
-          return 'TD3';
-        }
-      }
-    }
-
-    if (lines.length >= 3) {
-      var joined = lines.slice(0, 3).join('');
-      if (joined.length >= 70 && /^I/.test(lines[0])) return 'TD1';
-    }
-    if (lines.length >= 2) {
-      var j2 = lines.slice(0, 2).join('');
-      if (/^P/.test(lines[0]) && j2.length >= 70) return 'TD3';
-      if (/^I/.test(lines[0]) && j2.length >= 60) return 'TD2';
-    }
-
-    return null;
-  },
-
-  _parseTD1: function (lines) {
-    var l1 = lines[0] || '';
-    var l2 = lines[1] || '';
-    var l3 = lines[2] || '';
-
-    var docType = l1.charAt(0);
-    var docType2 = l1.length > 1 ? l1.charAt(1) : '';
-    var country = l1.length > 4 ? l1.substring(2, 5) : '';
-    var docNumber = l1.length > 13 ? l1.substring(5, 14).replace(/</g, '') : '';
-    var docNumberCheck = l1.length > 14 ? l1.charAt(14) : '';
-    var finalCheck = l1.length > 29 ? l1.charAt(29) : '';
-
-    var birthDateRaw = l2.length > 6 ? l2.substring(0, 6) : '';
-    var birthDateCheck = l2.length > 6 ? l2.charAt(6) : '';
-    var sex = l2.length > 7 ? l2.charAt(7) : '';
-    var expiryDateRaw = l2.length > 14 ? l2.substring(8, 14) : '';
-    var expiryDateCheck = l2.length > 14 ? l2.charAt(14) : '';
-    var nationality = l2.length > 18 ? l2.substring(15, 18) : '';
-
-    var nameParts = l3.split('<<');
-    var surname = '', givenNames = '';
-    if (nameParts.length >= 1) {
-      surname = MRZParser._normalizeName(nameParts[0].replace(/</g, ' '));
-      if (nameParts.length >= 2) {
-        givenNames = MRZParser._normalizeName(
-          nameParts.slice(1).join(' ').replace(/</g, ' ')
-        );
-      }
-    }
-
-    var mappedType = 'dni';
-    if (docType === 'P') mappedType = 'passport';
-    else if (docType === 'I' || docType === '1') {
-      if (docType2 === 'D') mappedType = 'dni';
-      else if (docType2 === 'N') mappedType = 'nie';
-      else mappedType = 'dni';
-    }
-
-    return {
-      format: 'TD1',
-      docType: mappedType,
-      country: country,
-      documentNumber: docNumber,
-      surname: surname,
-      givenNames: givenNames,
-      birthDate: MRZParser._parseDate(birthDateRaw),
-      sex: sex === 'M' ? 'M' : (sex === 'F' ? 'F' : ''),
-      expiryDate: MRZParser._parseDate(expiryDateRaw),
-      nationality: nationality,
-      checkDigits: {
-        documentNumber: docNumberCheck,
-        birthDate: birthDateCheck,
-        expiryDate: expiryDateCheck,
-        final: finalCheck
-      },
-      _docNumberRaw: l1.length > 14 ? l1.substring(5, 14) : '',
-      _birthDateRaw: birthDateRaw,
-      _expiryDateRaw: expiryDateRaw
     };
-  },
 
-  _parseTD3: function (lines) {
-    var l1 = lines[0] || '';
-    var l2 = lines[1] || '';
-
-    var docType = l1.charAt(0);
-    var country = l1.length > 4 ? l1.substring(2, 5) : '';
-    var namePart = l1.length > 5 ? l1.substring(5).replace(/<+$/, '') : '';
-    var nameParts = namePart.split('<<');
-    var surname = '', givenNames = '';
-    if (nameParts.length >= 1) {
-      surname = MRZParser._normalizeName(nameParts[0].replace(/</g, ' '));
-      if (nameParts.length >= 2) {
-        givenNames = MRZParser._normalizeName(
-          nameParts.slice(1).join(' ').replace(/</g, ' ')
-        );
-      }
-    }
-
-    var passportNumber = '';
-    var passportCheck = '';
-    var nationality = '';
-    var birthDateRaw = '';
-    var birthDateCheck = '';
-    var sex = '';
-    var expiryDateRaw = '';
-    var expiryDateCheck = '';
-
-    if (l2.length >= 9) {
-      passportNumber = l2.substring(0, 9).replace(/</g, '');
-      passportCheck = l2.length > 9 ? l2.charAt(9) : '';
-      nationality = l2.length > 12 ? l2.substring(10, 13) : '';
-      birthDateRaw = l2.length > 18 ? l2.substring(13, 19) : '';
-      birthDateCheck = l2.length > 19 ? l2.charAt(19) : '';
-      sex = l2.length > 20 ? l2.charAt(20) : '';
-      expiryDateRaw = l2.length > 26 ? l2.substring(21, 27) : '';
-      expiryDateCheck = l2.length > 27 ? l2.charAt(27) : '';
-    }
-
-    return {
-      format: 'TD3',
-      docType: 'passport',
-      country: country,
-      documentNumber: passportNumber,
-      surname: surname,
-      givenNames: givenNames,
-      birthDate: MRZParser._parseDate(birthDateRaw),
-      sex: sex === 'M' ? 'M' : (sex === 'F' ? 'F' : ''),
-      expiryDate: MRZParser._parseDate(expiryDateRaw),
-      nationality: nationality,
-      checkDigits: {
-        documentNumber: passportCheck,
-        birthDate: birthDateCheck,
-        expiryDate: expiryDateCheck,
-        final: ''
-      },
-      _docNumberRaw: l2.length >= 9 ? l2.substring(0, 9) : '',
-      _birthDateRaw: birthDateRaw,
-      _expiryDateRaw: expiryDateRaw
-    };
-  },
-
-  _parseTD2: function (lines) {
-    var l1 = lines[0] || '';
-    var l2 = lines[1] || '';
-
-    var docType = l1.charAt(0);
-    var country = l1.length > 4 ? l1.substring(2, 5) : '';
-    var namePart = l1.length > 5 ? l1.substring(5).replace(/<+$/, '') : '';
-    var nameParts = namePart.split('<<');
-    var surname = '', givenNames = '';
-    if (nameParts.length >= 1) {
-      surname = MRZParser._normalizeName(nameParts[0].replace(/</g, ' '));
-      if (nameParts.length >= 2) {
-        givenNames = MRZParser._normalizeName(
-          nameParts.slice(1).join(' ').replace(/</g, ' ')
-        );
-      }
-    }
-
-    var docNumber = '';
-    var docNumberCheck = '';
-    var nationality = '';
-    var birthDateRaw = '';
-    var birthDateCheck = '';
-    var sex = '';
-    var expiryDateRaw = '';
-    var expiryDateCheck = '';
-
-    if (l2.length >= 9) {
-      docNumber = l2.substring(0, 9).replace(/</g, '');
-      docNumberCheck = l2.length > 9 ? l2.charAt(9) : '';
-      nationality = l2.length > 12 ? l2.substring(10, 13) : '';
-      birthDateRaw = l2.length > 18 ? l2.substring(13, 19) : '';
-      birthDateCheck = l2.length > 19 ? l2.charAt(19) : '';
-      sex = l2.length > 20 ? l2.charAt(20) : '';
-      expiryDateRaw = l2.length > 26 ? l2.substring(21, 27) : '';
-      expiryDateCheck = l2.length > 27 ? l2.charAt(27) : '';
-    }
-
-    return {
-      format: 'TD2',
-      docType: 'dni',
-      country: country,
-      documentNumber: docNumber,
-      surname: surname,
-      givenNames: givenNames,
-      birthDate: MRZParser._parseDate(birthDateRaw),
-      sex: sex === 'M' ? 'M' : (sex === 'F' ? 'F' : ''),
-      expiryDate: MRZParser._parseDate(expiryDateRaw),
-      nationality: nationality,
-      checkDigits: {
-        documentNumber: docNumberCheck,
-        birthDate: birthDateCheck,
-        expiryDate: expiryDateCheck,
-        final: ''
-      },
-      _docNumberRaw: l2.length >= 9 ? l2.substring(0, 9) : '',
-      _birthDateRaw: birthDateRaw,
-      _expiryDateRaw: expiryDateRaw
-    };
-  },
-
-  _parseDate: function (raw) {
-    if (!raw || raw.length < 6 || /^<+$/.test(raw)) return '';
-    var yy = parseInt(raw.substring(0, 2), 10);
-    var mm = raw.substring(2, 4);
-    var dd = raw.substring(4, 6);
-    var d = parseInt(dd, 10);
-    var m = parseInt(mm, 10);
-    if (m < 1 || m > 12 || d < 1 || d > 31) return '';
-    var fullYear = yy >= 50 ? 1900 + yy : 2000 + yy;
-    return fullYear + '-' + mm + '-' + dd;
-  },
-
-  _normalizeName: function (name) {
-    return name.replace(/[^A-Za-zÀ-ÿÑñ\s'-]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 50);
-  },
-
-  _calculateCheckDigit: function (str) {
-    var weights = [7, 3, 1];
-    var sum = 0;
-    for (var i = 0; i < str.length; i++) {
-      var c = str[i];
-      var val;
-      if (c >= '0' && c <= '9') val = c.charCodeAt(0) - 48;
-      else if (c >= 'A' && c <= 'Z') val = c.charCodeAt(0) - 55;
-      else val = 0;
-      sum += val * weights[i % 3];
-    }
-    return (sum % 10).toString();
-  },
-
-  _validateCheckDigits: function (record) {
-    var calc = MRZParser._calculateCheckDigit;
-
-    if (record.documentNumber && record._docNumberRaw) {
-      var expected = calc(record._docNumberRaw);
-      record.documentNumberValid = record.checkDigits.documentNumber
-        ? expected === record.checkDigits.documentNumber
-        : null;
-    }
-    if (record._birthDateRaw) {
-      record.birthDateValid = calc(record._birthDateRaw) === record.checkDigits.birthDate;
-    }
-    if (record._expiryDateRaw) {
-      record.expiryDateValid = calc(record._expiryDateRaw) === record.checkDigits.expiryDate;
-    }
-
-    delete record._docNumberRaw;
-    delete record._birthDateRaw;
-    delete record._expiryDateRaw;
-    return record;
-  },
-
-  _calculateConfidence: function (record) {
-    var score = 0;
-    var factors = 0;
-
-    if (record.documentNumberValid !== null) {
-      score += record.documentNumberValid ? 0.35 : 0;
-      factors += 0.35;
-    }
-    if (record.birthDateValid !== null) {
-      score += record.birthDateValid ? 0.25 : 0;
-      factors += 0.25;
-    }
-    if (record.expiryDateValid !== null) {
-      score += record.expiryDateValid ? 0.25 : 0;
-      factors += 0.25;
-    }
-    var checkScore = factors > 0 ? score / factors : 0;
-
-    var completeness = 0;
-    if (record.documentNumber && record.documentNumber.length >= 5) completeness += 0.3;
-    if (record.surname) completeness += 0.2;
-    if (record.givenNames) completeness += 0.2;
-    if (record.birthDate) completeness += 0.2;
-    if (record.nationality && record.nationality.length === 3) completeness += 0.1;
-
-    return checkScore * 0.6 + Math.min(completeness, 1) * 0.4;
-  }
-};
-
-window.MRZParser = MRZParser;
+    window.MRZParser = MRZParser;
 })();
