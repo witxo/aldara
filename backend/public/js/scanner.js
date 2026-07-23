@@ -133,68 +133,95 @@ function setVal(name, value) {
 function parseSpanishId(text, lines) {
     const result = { firstName: null, lastName: null, documentType: null, documentNumber: null, nationality: null, birthDate: null, gender: null, hasAny: false };
     const upperText = text.toUpperCase();
+    const compressed = upperText.replace(/\s/g, '');
     const joined = lines.join(' ');
 
-    // --- 1) MRZ parsing: find IDESP or P< and grab surrounding block ---
+    // Common DNI label words to exclude from name extraction
+    const labelWords = new Set([
+        'NOMBRE', 'APELLIDOS', 'APELLIDO', 'NACIONALIDAD', 'NACIONAL',
+        'IDENTIDAD', 'DOCUMENTO', 'DOMICILIO', 'DIRECCION', 'FECHA',
+        'NACIMIENTO', 'SEXO', 'FIRMA', 'VALIDEZ', 'VÁLIDO', 'EXPIRA',
+        'VARON', 'MUJER', 'MASCULINO', 'FEMENINO', 'ESPAÑA', 'ESPANA',
+        'PASAPORTE', 'PASSPORT', 'DNI', 'NIF', 'NIE', 'NUMERO', 'NUM',
+        'ESTADO', 'CIVIL', 'PROFESION', 'LUGAR', 'NACIMIENTO', 'LIMITACIONES',
+        'CONDICIONES', 'CARACTERES', 'ELECTRONICO', 'SOPORTE', 'TITULAR',
+        'CERTIFICADO', 'ORGANO', 'EXPIDE', 'EXPEDICION',
+    ]);
+
+    // --- 1) MRZ parsing ---
     let mrzBlock = '';
-    let mrzStart = -1;
+    // Match: IDESP, I<ESP, I ESP, or 1<ESP etc (Tesseract misreads I as 1 or l)
+    const mrzPatterns = [/IDESP/i, /I[<\s]ESP/i, /1[<\s]ESP/i, /I[<\s]/i];
+    let mrzIdx = -1;
     for (let i = 0; i < lines.length; i++) {
-        const l = lines[i].toUpperCase().replace(/\s/g, '');
-        if (l.startsWith('IDESP') || l.startsWith('P<')) {
-            mrzBlock = l;
-            mrzStart = i;
+        const cleaned = lines[i].toUpperCase().replace(/\s/g, '');
+        if (mrzPatterns.some(p => p.test(cleaned))) {
+            mrzIdx = i;
+            mrzBlock = lines[i].toUpperCase();
             for (let j = 1; j <= 2; j++) {
                 if (i + j < lines.length) mrzBlock += lines[i + j].toUpperCase().replace(/\s/g, '');
             }
             break;
         }
     }
-    // Also search raw text (MRZ may span lines oddly)
+    // Also search raw compressed text
     if (!mrzBlock) {
-        const idx = upperText.replace(/\s/g, '').indexOf('IDESP');
-        if (idx >= 0) {
-            mrzBlock = upperText.replace(/\s/g, '').substring(idx, idx + 90);
+        const tryPatterns = ['IDESP', 'I ESP', 'I<ESP', '1<ESP', '1 ESP'];
+        let bestIdx = -1, bestCode = '';
+        for (const p of tryPatterns) {
+            const idx = compressed.indexOf(p);
+            if (idx >= 0 && (bestIdx === -1 || idx < bestIdx)) {
+                bestIdx = idx; bestCode = p;
+            }
+        }
+        if (bestIdx >= 0) {
+            mrzBlock = compressed.substring(bestIdx, bestIdx + 90);
         }
     }
 
     if (mrzBlock) {
-        // Extract names: after IDESP / P<XXX<, split by < or digit boundary
-        let nameRaw = '';
-        if (mrzBlock.startsWith('IDESP')) {
-            nameRaw = mrzBlock.replace(/^IDESP/, '');
-        } else if (mrzBlock.startsWith('P<')) {
-            nameRaw = mrzBlock.replace(/^P<[A-Z]{3}</, '');
-            result.documentType = 'passport';
+        // Strip leading IDESP / I<ESP / I ESP
+        let block = mrzBlock.replace(/^I?\s*[<]?\s*ESP\s*/i, '').replace(/^IDESP/i, '');
+        // Split by < or digits; first tokens are names
+        const tokens = block.split(/<+/).filter(t => t && t.length > 1 && /^[A-Z]{2,}$/.test(t.replace(/\d/g, '')));
+        // Names: surname before <<, given name after
+        const nameStr = tokens.join(' ');
+        const nameParts = nameStr.split(/(?:\s{2,}|<{2,})/); // double space or << splits surname/given
+        if (nameParts.length >= 2) {
+            result.lastName = cleanName(nameParts[0].replace(/\d/g, '').trim());
+            result.firstName = cleanName(nameParts.slice(1).join(' ').replace(/\d/g, '').trim());
+        } else if (tokens.length >= 2) {
+            result.lastName = cleanName(tokens[0]);
+            result.firstName = cleanName(tokens.slice(1).join(' '));
+        } else if (tokens.length === 1) {
+            result.lastName = cleanName(tokens[0]);
         }
-        // Split name by < sequences; filter out digit-only tokens
-        const nameTokens = nameRaw.split(/<+/).filter(t => t && !/^\d/.test(t));
-        if (/^IDESP/.test(mrzBlock)) {
-            if (nameTokens.length > 0) result.lastName = cleanName(nameTokens[0]);
-            if (nameTokens.length > 1) result.firstName = cleanName(nameTokens[1]);
-            // Document number: 8 digits + letter
-            const docM = mrzBlock.match(/(\d{8})([A-Z])/);
-            if (docM) { result.documentNumber = docM[1] + docM[2]; result.documentType = 'dni'; }
-        } else {
-            // Passport: letter(s) + digits
-            if (nameTokens.length > 0) result.lastName = cleanName(nameTokens[0]);
-            if (nameTokens.length > 1) result.firstName = cleanName(nameTokens[1]);
-            const docM = mrzBlock.match(/([A-Z]{1,2})(\d{6,7})/);
-            if (docM) { result.documentNumber = docM[1] + docM[2]; result.documentType = 'passport'; }
-            const natM = mrzBlock.match(/[A-Z]{3}/);
-            if (natM) result.nationality = natM[0] === 'ESP' ? 'ES' : natM[0];
-        }
-        // Birth date in YYMMDD + check digit + M/F/C
+        // Birth date: YYMMDD + digit + M/F/C
         const dobM = mrzBlock.match(/(\d{6})\d[MFC]/);
         if (dobM) result.birthDate = formatMrzDate(dobM[1]);
+        // Document number: 8 digits + letter
+        const docM = mrzBlock.match(/(\d{8})([A-Z])/);
+        if (docM) { result.documentNumber = docM[1] + docM[2]; result.documentType = 'dni'; }
+        else {
+            // Try passport doc number
+            const pdocM = mrzBlock.match(/([A-Z]{1,2})(\d{6,7})/);
+            if (pdocM) { result.documentNumber = pdocM[1] + pdocM[2]; result.documentType = 'passport'; }
+        }
         if (mrzBlock.includes('ESP')) result.nationality = 'ES';
         const gM = mrzBlock.match(/[MFC]/);
         if (gM) result.gender = gM[0] === 'M' ? 'male' : (gM[0] === 'F' ? 'female' : '');
         result.hasAny = !!(result.documentNumber || result.firstName || result.lastName);
-        return result;
+        if (result.hasAny) return result;
     }
 
-    // --- 2) Fallback: field-based OCR ---
-    // Document number
+    // --- 2) Also look for MRZ birth date even if MRZ block not fully detected ---
+    // (MRZ might be partially readable; YYMMDD + check digit + M/F/C pattern)
+    if (!result.birthDate) {
+        const mrzDobMatch = compressed.match(/(\d{6})\d[MFC]/);
+        if (mrzDobMatch) result.birthDate = formatMrzDate(mrzDobMatch[1]);
+    }
+
+    // --- 3) Fallback: field-based OCR ---
     const nieMatch = text.match(/\b([XYZ]\d{7}[A-Z])\b/);
     const dniMatch = text.match(/\b(\d{8}[A-Z])\b/);
     if (nieMatch) { result.documentNumber = nieMatch[1]; result.documentType = 'nie'; }
@@ -205,29 +232,53 @@ function parseSpanishId(text, lines) {
         if (m) result.documentNumber = m[1];
     }
 
-    // Names: try "APELLIDOS" / "NOMBRE" field labels
-    let apellidosIdx = -1, nombreIdx = -1;
-    lines.forEach((l, i) => {
-        const u = l.toUpperCase().replace(/[^A-Z\s]/g, '');
-        if (u.startsWith('APELLID') && apellidosIdx === -1) apellidosIdx = i;
-        if ((u.startsWith('NOMBRE') || u === 'NOM' || u.startsWith('NOM ')) && nombreIdx === -1) nombreIdx = i;
-    });
-    if (apellidosIdx >= 0 && apellidosIdx + 1 < lines.length) {
-        const n = lines[apellidosIdx + 1].replace(/[^A-Za-zÀ-ÿÑñ\s'-]/g, '').trim();
-        if (n.length >= 2) result.lastName = n.split(/\s+/).filter(w => w.length > 1).join(' ').substring(0, 50);
+    // Names by field labels: search whole text for label:value patterns
+    if (!result.lastName && !result.firstName) {
+        // Try "APELLIDOS: VALUE" and "NOMBRE: VALUE" on the same line
+        const apM = text.match(/APELLIDOS?\s*[:\s]+([A-Za-zÀ-ÿÑñ\s'-]{2,}?)(?:\s+(?:NOMBRE|NACIONALIDAD|FECHA|SEXO|DOCUMENTO|DNI|DOMICILIO)|$)/i);
+        if (apM) result.lastName = cleanName(apM[1]);
+        const nomM = text.match(/NOMBRE\s*[:\s]+([A-Za-zÀ-ÿÑñ\s'-]{2,}?)(?:\s+(?:APELLIDO|NACIONALIDAD|FECHA|SEXO|DOCUMENTO|DNI)|$)/i);
+        if (nomM) result.firstName = cleanName(nomM[1]);
     }
-    if (nombreIdx >= 0 && nombreIdx + 1 < lines.length) {
-        const n = lines[nombreIdx + 1].replace(/[^A-Za-zÀ-ÿÑñ\s'-]/g, '').trim();
-        if (n.length >= 2) result.firstName = n.split(/\s+/).filter(w => w.length > 1).join(' ').substring(0, 50);
+    // If one-line patterns didn't work, try multi-line (label on one line, value on next)
+    if (!result.lastName || !result.firstName) {
+        let apellidosIdx = -1, nombreIdx = -1;
+        lines.forEach((l, i) => {
+            const u = l.toUpperCase().replace(/[^A-Z\s:]/g, '');
+            if (u.startsWith('APELLID') && apellidosIdx === -1) apellidosIdx = i;
+            if ((/^NOMBRE/.test(u) || u.trim() === 'NOM') && nombreIdx === -1) nombreIdx = i;
+        });
+        if (!result.lastName && apellidosIdx >= 0) {
+            // Check same line first (label: value)
+            const sameLine = lines[apellidosIdx].replace(/^[^:]*[:]\s*/, '').trim();
+            if (sameLine.length >= 2 && !labelWords.has(sameLine.toUpperCase().split(/\s+/)[0])) {
+                result.lastName = cleanName(sameLine);
+            } else if (apellidosIdx + 1 < lines.length) {
+                const n = lines[apellidosIdx + 1].replace(/[^A-Za-zÀ-ÿÑñ\s'-]/g, '').trim();
+                const firstWord = n.toUpperCase().split(/\s+/)[0];
+                if (n.length >= 2 && !labelWords.has(firstWord)) result.lastName = cleanName(n);
+            }
+        }
+        if (!result.firstName && nombreIdx >= 0) {
+            const sameLine = lines[nombreIdx].replace(/^[^:]*[:]\s*/, '').trim();
+            if (sameLine.length >= 2 && !labelWords.has(sameLine.toUpperCase().split(/\s+/)[0])) {
+                result.firstName = cleanName(sameLine);
+            } else if (nombreIdx + 1 < lines.length) {
+                const n = lines[nombreIdx + 1].replace(/[^A-Za-zÀ-ÿÑñ\s'-]/g, '').trim();
+                const firstWord = n.toUpperCase().split(/\s+/)[0];
+                if (n.length >= 2 && !labelWords.has(firstWord)) result.firstName = cleanName(n);
+            }
+        }
     }
-    // If labels not found, try names near document number
+    // Final attempt: find uppercase name-like words near document number, excluding labels
     if (!result.lastName && !result.firstName && result.documentNumber) {
         const pos = upperText.indexOf(result.documentNumber);
-        if (pos > 0) {
+        if (pos > 10) {
             const before = upperText.substring(0, pos).trim();
-            const words = before.split(/[\s<]+/).filter(w => /^[A-Z]{3,}$/.test(w));
+            const words = before.split(/[\s,;:<]+/).filter(w => /^[A-ZÀ-ÿ]{3,}$/.test(w) && !labelWords.has(w));
             if (words.length >= 2) {
                 result.lastName = words.slice(-2).join(' ').substring(0, 50);
+                if (words.length >= 4) result.firstName = words.slice(-4, -2).join(' ');
             } else if (words.length === 1) {
                 result.lastName = words[0];
             }
@@ -235,30 +286,42 @@ function parseSpanishId(text, lines) {
     }
 
     // Nationality
-    const natMap = { 'ESP':'ES', 'ESPAÑA':'ES', 'SPAIN':'ES', 'FRANCE':'FR', 'FRANCIA':'FR', 'GERMANY':'DE', 'ALEMANIA':'DE', 'ITALIA':'IT', 'ITALY':'IT', 'GB':'GB', 'REINO UNIDO':'GB', 'PORTUGAL':'PT', 'USA':'US', 'ESTADOS UNIDOS':'US' };
-    for (const [k, v] of Object.entries(natMap)) { if (upperText.includes(k)) { result.nationality = v; break; } }
     if (!result.nationality) {
-        const m = text.match(/NACIONALIDAD[:\s]*([A-Z]{2,4})/i);
-        if (m) result.nationality = m[1].toUpperCase();
+        const natMap = { 'ESP':'ES', 'ESPAÑA':'ES', 'SPAIN':'ES', 'FRANCE':'FR', 'FRANCIA':'FR', 'GERMANY':'DE', 'ALEMANIA':'DE', 'ITALIA':'IT', 'ITALY':'IT', 'GB':'GB', 'REINO UNIDO':'GB', 'PORTUGAL':'PT', 'USA':'US', 'ESTADOS UNIDOS':'US' };
+        for (const [k, v] of Object.entries(natMap)) { if (upperText.includes(k)) { result.nationality = v; break; } }
+        if (!result.nationality) {
+            const m = text.match(/NACIONALIDAD[:\s]*([A-Za-zÀ-ÿ]{2,6})/i);
+            if (m) {
+                const c = m[1].toUpperCase();
+                result.nationality = natMap[c] || (c.length === 2 ? c : null);
+            }
+        }
     }
 
-    // Birth date: first try "NACIMIENTO" label, then look for any valid date
-    const nacIdx = upperText.indexOf('NACIMIENTO');
-    const dateRegex = /(\d{2})[\/\s-](\d{2})[\/\s-](\d{4})/g;
-    let m;
-    if (nacIdx >= 0) {
-        const after = upperText.substring(nacIdx, Math.min(nacIdx + 80, upperText.length));
-        const mm = dateRegex.exec(after);
-        if (mm) { const d=parseInt(mm[1]),mo=parseInt(mm[2]),y=parseInt(mm[3]); if(d>=1&&d<=31&&mo>=1&&mo<=12&&y>=1900&&y<=2010) result.birthDate = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
-    }
+    // Birth date by field labels
     if (!result.birthDate) {
-        const allDates = [];
-        while ((m = dateRegex.exec(upperText)) !== null) {
+        const dateRegex = /(\d{2})[\/\s-](\d{2})[\/\s-](\d{4})/g;
+        const nacIdx = upperText.indexOf('NACIMIENTO');
+        if (nacIdx >= 0) {
+            const after = upperText.substring(nacIdx, Math.min(nacIdx + 80, upperText.length));
+            const mm = dateRegex.exec(after);
+            if (mm) { const d=parseInt(mm[1]),mo=parseInt(mm[2]),y=parseInt(mm[3]); if(d>=1&&d<=31&&mo>=1&&mo<=12&&y>=1900&&y<=2010) result.birthDate = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+        }
+        if (!result.birthDate) {
+            // Also try "FECHA NACIMIENTO" or "F.NAC" patterns
+            const fnacM = upperText.match(/FECHA\s+NAC[:\s]+(\d{2})[\/\s-](\d{2})[\/\s-](\d{4})/);
+            if (fnacM) result.birthDate = `${fnacM[3]}-${fnacM[2].padStart(2,'0')}-${fnacM[1].padStart(2,'0')}`;
+        }
+    }
+    // Last resort: find any valid birth-like date
+    if (!result.birthDate) {
+        const allDates = []; let m;
+        const dr = /(\d{2})[\/\s-](\d{2})[\/\s-](\d{4})/g;
+        while ((m = dr.exec(upperText)) !== null) {
             const d=parseInt(m[1]),mo=parseInt(m[2]),y=parseInt(m[3]);
             if (d>=1&&d<=31&&mo>=1&&mo<=12&&y>=1900&&y<=2010)
                 allDates.push(`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
         }
-        // Pick the earliest date as birth date (birth tends to be the oldest date on the card)
         if (allDates.length === 1) result.birthDate = allDates[0];
         else if (allDates.length > 1) result.birthDate = allDates.sort()[0];
     }
