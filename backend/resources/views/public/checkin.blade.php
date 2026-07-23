@@ -45,7 +45,7 @@
                         <span class="text-xs text-blue-500">Los datos se rellenarán automáticamente</span>
                     </div>
                     <p class="text-xs text-blue-600 mb-3">Tus datos no salen de tu dispositivo. El escaneo se procesa localmente.</p>
-                    <x-document-scanner prefix="guests[0][" suffix="]" />
+                    <x-document-scanner prefix="guests[0][" suffix="]" parserMode="{{ $reservation->tenant->settings['mrz_parser'] ?? 'client' }}" />
                 </div>
 
                 <h3 class="font-semibold mb-3">Datos del viajero principal</h3>

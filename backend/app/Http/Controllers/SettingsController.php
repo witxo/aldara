@@ -22,6 +22,7 @@ class SettingsController extends Controller
             'default_checkin_time' => 'date_format:H:i',
             'default_checkout_time' => 'date_format:H:i',
             'retention_days' => 'integer|min:30|max:3650',
+            'mrz_parser' => 'in:client,rakibdevs',
         ]);
 
         $settings = $tenant->settings ?? [];

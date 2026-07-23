@@ -6,6 +6,7 @@
     'confidenceThreshold' => 0.55,
     'buttonLabel' => 'Escanear documento',
     'compact' => false,
+    'parserMode' => 'client',
 ])
 
 <div
@@ -15,6 +16,7 @@
         debug: @js($debug),
         maxCaptures: @js($maxCaptures),
         confidenceThreshold: @js($confidenceThreshold),
+        parserMode: @js($parserMode),
     })"
     class="document-scanner"
 >

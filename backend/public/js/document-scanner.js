@@ -20,6 +20,7 @@ document.addEventListener('alpine:init', function () {
       debug: config.debug || false,
       maxCaptures: config.maxCaptures || 10,
       confidenceThreshold: config.confidenceThreshold || 0.55,
+      parserMode: config.parserMode || 'client',
 
       showCamera: false,
       status: 'idle',
@@ -272,9 +273,59 @@ document.addEventListener('alpine:init', function () {
       },
 
       _handleResult: function (text, timedOut) {
+        if (this.parserMode === 'rakibdevs') {
+          var self = this;
+          this._parseWithServer(text, timedOut, function (parsed) {
+            self._evaluateResult(parsed, timedOut);
+          });
+        } else {
+          var parsed = text ? MRZParser.parse(text) : null;
+          logger('parsed', parsed);
+          this._evaluateResult(parsed, timedOut);
+        }
+      },
+
+      _parseWithServer: function (text, timedOut, callback) {
+        var self = this;
+        if (!text || text.length < 10) {
+          callback(null);
+          return;
+        }
+
+        var csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).getAttribute
+          ? document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          : '';
+
+        logger('Parsing with server (rakibdevs)...');
+        fetch('/settings/mrz/parse', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ text: text })
+        }).then(function (res) {
+          return res.json();
+        }).then(function (json) {
+          if (timedOut) return;
+          if (json && json.success && json.data) {
+            var d = json.data;
+            d.confidence = 1.0;
+            logger('Server parsed:', JSON.stringify(d));
+            callback(d);
+          } else {
+            logger('Server parse failed:', json && json.message);
+            callback(null);
+          }
+        }).catch(function (err) {
+          logger('Server parse error:', err);
+          if (!timedOut) callback(null);
+        });
+      },
+
+      _evaluateResult: function (parsed, timedOut) {
         this._captureCount++;
-        var parsed = text ? MRZParser.parse(text) : null;
-        logger('parsed', parsed);
 
         if (parsed && parsed.confidence > this._bestConfidence) {
           this._bestResult = parsed;
