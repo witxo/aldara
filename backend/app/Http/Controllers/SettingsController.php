@@ -33,6 +33,8 @@ class SettingsController extends Controller
 
         $tenant->update(['settings' => $settings]);
 
+        cache()->forget('tenant.' . $tenant->id);
+
         return redirect()->route('settings.index')->with('success', 'Ajustes actualizados');
     }
 }
