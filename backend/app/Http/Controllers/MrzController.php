@@ -78,11 +78,44 @@ class MrzController extends Controller
             $lines[0] = 'I' . $lines[0];
         }
 
-        // Clean name line (third line for TD1): convert common OCR noise separators
-        if (isset($lines[2])) {
-            $lines[2] = preg_replace('/SS/', '<<', $lines[2]);
-            $lines[2] = preg_replace('/[KL]{2,}/', '<<', $lines[2]);
-            $lines[2] = preg_replace('/<[KL]/', '<<', $lines[2]);
+        // Apply noise cleaning to ALL lines, not just line 3
+        foreach ($lines as $i => &$line) {
+            // SS -> << (common misread of double filler)
+            $line = preg_replace('/SS/', '<<', $line);
+            // KL/LK/KK/LL runs -> << (runs of noise chars where filler should be)
+            $line = preg_replace('/[KL]{2,}/', '<<', $line);
+            // Single K/L between < chars -> <
+            $line = preg_replace('/<[KL]/', '<<', $line);
+            $line = preg_replace('/[KL]</', '<<', $line);
+            // D between < chars -> <
+            $line = preg_replace('/<D/', '<<', $line);
+            // Leading D after I at position 1 (I<ESP misread as IDESP)
+            if ($i === 0 && str_starts_with($line, 'ID')) {
+                $line = 'I<' . substr($line, 2);
+            }
+        }
+        unset($line);
+
+        // Aggressive: in the first two lines, convert sequences of 3+ noise chars
+        // Typically the filler region at the end gets read as K/L/D instead of <
+        for ($i = 0; $i < min(2, count($lines)); $i++) {
+            // If the line has more than 30 chars, convert trailing cluster of
+            // A-Z chars (excluding leading fields) to fillers
+            if (strlen($lines[$i]) > 30) {
+                // From position 28 onward, any remaining K/L/D -> <
+                $tail = substr($lines[$i], 28);
+                $tail = preg_replace('/[KLD]/', '<', $tail);
+                $lines[$i] = substr($lines[$i], 0, 28) . $tail;
+            }
+        }
+
+        // Trim or pad each line to exactly 30 chars for TD1 format
+        for ($i = 0; $i < min(3, count($lines)); $i++) {
+            if (strlen($lines[$i]) > 30) {
+                $lines[$i] = substr($lines[$i], 0, 30);
+            } elseif (strlen($lines[$i]) < 30) {
+                $lines[$i] = str_pad($lines[$i], 30, '<');
+            }
         }
 
         return implode("\n", array_slice($lines, 0, 3));
