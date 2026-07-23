@@ -37,10 +37,12 @@ class PropertyController extends Controller
             'ses_username' => 'nullable|string|max:255',
             'ses_password' => 'nullable|string|max:255',
             'ses_codigo_arrendador' => 'nullable|string|max:10',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $validated['tenant_id'] = tenant_id();
-        Property::create($validated);
+        $validated['logo'] = $request->file('logo')?->store('properties', 'public');
+        $property = Property::create($validated);
 
         return redirect()->route('properties.index')->with('success', 'Alojamiento creado');
     }
@@ -75,11 +77,27 @@ class PropertyController extends Controller
             'ses_username' => 'nullable|string|max:255',
             'ses_password' => 'nullable|string|max:255',
             'ses_codigo_arrendador' => 'nullable|string|max:10',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'remove_logo' => 'nullable|boolean',
         ]);
 
         if (empty($validated['ses_password'])) {
             unset($validated['ses_password']);
         }
+
+        if ($request->boolean('remove_logo') && $property->logo) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($property->logo);
+            $validated['logo'] = null;
+        } elseif ($request->hasFile('logo')) {
+            if ($property->logo) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($property->logo);
+            }
+            $validated['logo'] = $request->file('logo')->store('properties', 'public');
+        } else {
+            unset($validated['logo']);
+        }
+
+        unset($validated['remove_logo']);
 
         $property->update($validated);
 

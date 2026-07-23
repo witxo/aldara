@@ -21,6 +21,9 @@ echo "=== Installing PHP dependencies ==="
 cd "$WEB_DIR"
 /opt/plesk/php/8.3/bin/php composer.phar install --no-dev --no-interaction
 
+echo "=== Running migrations ==="
+/opt/plesk/php/8.3/bin/php artisan migrate --force
+
 echo "=== Clearing Laravel caches ==="
 /opt/plesk/php/8.3/bin/php artisan route:clear
 /opt/plesk/php/8.3/bin/php artisan config:clear

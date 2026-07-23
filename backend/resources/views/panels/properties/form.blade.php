@@ -4,7 +4,7 @@
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-semibold mb-6">@yield('title')</h3>
-        <form method="POST" action="{{ isset($property) ? route('properties.update', $property) : route('properties.store') }}">
+        <form method="POST" action="{{ isset($property) ? route('properties.update', $property) : route('properties.store') }}" enctype="multipart/form-data">
             @csrf
             @if(isset($property)) @method('PUT') @endif
 
@@ -54,6 +54,17 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nº licencia</label>
                     <input type="text" name="license_number" value="{{ old('license_number', $property->license_number ?? '') }}" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+                    <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    @if(isset($property) && $property->logo)
+                    <div class="mt-2 flex items-center gap-3">
+                        <img src="{{ $property->logo_url }}" alt="Logo" class="h-10 object-contain">
+                        <label class="text-xs text-gray-400"><input type="checkbox" name="remove_logo" value="1"> Eliminar logo</label>
+                    </div>
+                    @endif
+                    @error('logo') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>

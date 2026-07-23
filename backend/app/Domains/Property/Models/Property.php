@@ -26,6 +26,7 @@ class Property extends Model
         'latitude',
         'longitude',
         'license_number',
+        'logo',
         'ses_establecimiento_code',
         'ses_username',
         'ses_password',
@@ -50,6 +51,11 @@ class Property extends Model
         'settings' => 'array',
         'metadata' => 'array',
     ];
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        return $this->logo ? asset('storage/' . $this->logo) : null;
+    }
 
     public function reservations()
     {
