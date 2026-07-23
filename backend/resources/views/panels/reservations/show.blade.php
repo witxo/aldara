@@ -82,9 +82,10 @@
             <h4 class="font-semibold mb-4">Acciones</h4>
             <div class="space-y-3">
                 @if($reservation->status === 'confirmed' || $reservation->status === 'pending')
-                <form method="POST" action="{{ route('api.v1.reservations.send-checkin', $reservation) }}" onsubmit="event.preventDefault(); fetch(this.action, {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}}).then(r=>r.json()).then(d=>alert('Enlace generado: ' + d.data.url));">
+                <button onclick="generateCheckinUrl(function(url){ navigator.clipboard.writeText(url).then(function(){ var btn=event.target; btn.textContent='¡Copiado!'; setTimeout(function(){ btn.textContent='Copiar enlace check-in'; },2000); }); })" class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200">Copiar enlace check-in</button>
+                <form method="POST" action="{{ route('api.v1.reservations.send-checkin', $reservation) }}" onsubmit="event.preventDefault(); var f=this; fetch(f.action, {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}}).then(function(r){ return r.json(); }).then(function(d){ if(d.data && d.data.url){ navigator.clipboard.writeText(d.data.url); alert('Enlace enviado por email y copiado al portapapeles'); } });">
                     @csrf
-                    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Enviar enlace check-in</button>
+                    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Enviar enlace por email</button>
                 </form>
                 @endif
                 <a href="{{ route('reservations.edit', $reservation) }}" class="block text-center bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm">Editar reserva</a>
@@ -109,3 +110,17 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function generateCheckinUrl(callback) {
+    var route = '{{ route("api.v1.reservations.send-checkin", $reservation) }}';
+    var token = '{{ csrf_token() }}';
+    fetch(route, {method:'POST', headers:{'X-CSRF-TOKEN':token}})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (d.data && d.data.url) callback(d.data.url);
+        });
+}
+</script>
+@endpush
