@@ -159,6 +159,13 @@ var MRZParser = {
     var expiryDateCheck = l2.length > 14 ? l2.charAt(14) : '';
     var nationality = l2.length > 18 ? l2.substring(15, 18) : '';
 
+    var optionalField = l1.length > 24 ? l1.substring(15, 24) : '';
+    var optDocNumber = optionalField ? this._cleanDocNumber(optionalField) : '';
+    var docNumberLetters = (docNumberRaw.match(/[A-Z]/g) || []).length;
+    if (docNumberLetters >= 3 && optDocNumber && optDocNumber.length >= 5) {
+      docNumber = optDocNumber;
+    }
+
     var names = this._splitNames(l3);
     var surname = names.surname;
     var givenNames = names.givenNames;
@@ -343,6 +350,15 @@ var MRZParser = {
       if (/^[BCDFGHJKLMNPQRSTVWXYZ]{4,}$/i.test(w)) return false;
       if (/^[A-Za-z]$/.test(w)) return false;
       return true;
+    });
+
+    words = words.map(function(w) {
+      if (w.length >= 4 && /[AEIOU]/i.test(w)) {
+        w = w.replace(/^[KL]+/g, '').replace(/[KL]+$/g, '');
+      }
+      return w;
+    }).filter(function(w) {
+      return w && w.length >= 2;
     });
 
     if (words.length === 0) return text.substring(0, 40);

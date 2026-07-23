@@ -151,8 +151,8 @@ document.addEventListener('alpine:init', function () {
 
         var scaled = document.createElement('canvas');
         var sctx = scaled.getContext('2d');
-        scaled.width = w * 2;
-        scaled.height = h * 2;
+        scaled.width = w * 3;
+        scaled.height = h * 3;
         sctx.drawImage(this._canvasEl, 0, 0, scaled.width, scaled.height);
 
         var imageData = sctx.getImageData(0, 0, scaled.width, scaled.height);
@@ -160,40 +160,20 @@ document.addEventListener('alpine:init', function () {
         var n = data.length;
         var i;
 
+        var min = 255, max = 0;
         for (i = 0; i < n; i += 4) {
           var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-          gray = Math.max(0, Math.min(255, (gray - 128) * 1.35 + 128));
           data[i] = data[i + 1] = data[i + 2] = gray;
+          if (gray < min) min = gray;
+          if (gray > max) max = gray;
         }
 
-        var histogram = new Array(256).fill(0);
-        for (i = 0; i < n; i += 4) {
-          histogram[Math.round(data[i])]++;
-        }
-        var total = n / 4;
-        var sum = 0;
-        for (i = 0; i < 256; i++) sum += i * histogram[i];
-
-        var sumB = 0, wB = 0, wF = 0;
-        var maxVariance = 0, threshold = 128;
-        for (i = 0; i < 256; i++) {
-          wB += histogram[i];
-          if (wB === 0) continue;
-          wF = total - wB;
-          if (wF === 0) break;
-          sumB += i * histogram[i];
-          var mB = sumB / wB;
-          var mF = (sum - sumB) / wF;
-          var variance = wB * wF * (mB - mF) * (mB - mF);
-          if (variance > maxVariance) {
-            maxVariance = variance;
-            threshold = i;
+        var range = max - min;
+        if (range > 20) {
+          for (i = 0; i < n; i += 4) {
+            var stretched = ((data[i] - min) / range) * 255;
+            data[i] = data[i + 1] = data[i + 2] = Math.round(Math.max(0, Math.min(255, stretched)));
           }
-        }
-
-        for (i = 0; i < n; i += 4) {
-          var val = data[i] < threshold ? 0 : 255;
-          data[i] = data[i + 1] = data[i + 2] = val;
         }
 
         sctx.putImageData(imageData, 0, 0);
