@@ -25,7 +25,7 @@
                 <span class="text-xs text-blue-500">Los datos se rellenarán automáticamente</span>
             </div>
             <p class="text-xs text-blue-600 mb-3">El escaneo se procesa localmente en tu navegador.</p>
-            <x-document-scanner parserMode="{{ current_tenant()->settings['mrz_parser'] ?? 'client' }}" />
+            <x-document-scanner />
         </div>
 
         <form method="POST" action="{{ isset($guest) ? route('guests.update', $guest) : route('guests.store') }}">

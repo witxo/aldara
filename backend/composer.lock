@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "631b131f3889aea5c35059783cc14b48",
+    "content-hash": "f4d0c8e20b2430ec060b03d795174a28",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -4286,73 +4286,6 @@
                 "source": "https://github.com/bobthecow/psysh/tree/v0.12.24"
             },
             "time": "2026-06-29T15:41:09+00:00"
-        },
-        {
-            "name": "rakibdevs/mrz-parser",
-            "version": "v2.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/rakibdevs/mrz-parser.git",
-                "reference": "11e2fe6f663091c293e2f45f25845e3d7ef74bed"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/rakibdevs/mrz-parser/zipball/11e2fe6f663091c293e2f45f25845e3d7ef74bed",
-                "reference": "11e2fe6f663091c293e2f45f25845e3d7ef74bed",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^8.2"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.64",
-                "illuminate/support": "^10.0|^11.0|^12.0",
-                "pestphp/pest": "^3.0"
-            },
-            "suggest": {
-                "illuminate/support": "Required to use the Laravel service provider and the ValidMrz validation rule."
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Rakibdevs\\MrzParser\\Laravel\\MrzParserServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Rakibdevs\\MrzParser\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Md. Rakibul Islam",
-                    "email": "rakib1708@gmail.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "A PHP package for MRZ (Machine Readable Zones) code parser for Passport, Visa & Travel Documents.",
-            "homepage": "https://github.com/rakibdevs/mrz-parser",
-            "keywords": [
-                "mrz-parser",
-                "rakibdevs"
-            ],
-            "support": {
-                "issues": "https://github.com/rakibdevs/mrz-parser/issues",
-                "source": "https://github.com/rakibdevs/mrz-parser/tree/v2.0.0"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/rakibdevs",
-                    "type": "github"
-                }
-            ],
-            "time": "2026-07-01T17:36:18+00:00"
         },
         {
             "name": "ralouphie/getallheaders",

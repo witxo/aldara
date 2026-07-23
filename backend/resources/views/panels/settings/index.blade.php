@@ -29,20 +29,7 @@
                     <input type="checkbox" name="checkin_require_document" value="1" {{ old('checkin_require_document', $settings['require_document'] ?? false) ? 'checked' : '' }} class="rounded border-gray-300">
                     <label class="text-sm">Requerir documento en check-in</label>
                 </div>
-                <div class="border-t pt-4 mt-4">
-                    <h4 class="text-sm font-medium text-gray-700 mb-2">Escáner de documentos (MRZ)</h4>
-                    <div class="flex items-center gap-3">
-                        <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="mrz_parser" value="client" {{ old('mrz_parser', $settings['mrz_parser'] ?? 'client') === 'client' ? 'checked' : '' }} class="text-blue-600">
-                            Cliente (JS, actual)
-                        </label>
-                        <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="mrz_parser" value="rakibdevs" {{ old('mrz_parser', $settings['mrz_parser'] ?? 'client') === 'rakibdevs' ? 'checked' : '' }} class="text-blue-600">
-                            Servidor (rakibdevs/mrz-parser)
-                        </label>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1">El cambio no requiere recargar. Se aplica al abrir el escáner.</p>
-                </div>
+                
             </div>
             <div class="mt-6 flex justify-end gap-3">
                 <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm">Guardar ajustes</button>

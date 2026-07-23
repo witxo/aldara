@@ -15,7 +15,7 @@
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.4",
         "predis/predis": "^2.2",
-        "rakibdevs/mrz-parser": "*",
+        
         "spatie/laravel-activitylog": "^4.8",
         "spatie/laravel-ciphersweet": "^1.0",
         "spatie/laravel-medialibrary": "^11.0",

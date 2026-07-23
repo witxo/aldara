@@ -63,7 +63,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('/users', \App\Http\Controllers\Tenant\TenantUserController::class)->names('tenant-users');
         Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
         Route::post('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
-        Route::post('/settings/mrz/parse', [\App\Http\Controllers\MrzController::class, 'parse'])->name('settings.mrz.parse');
+        
         Route::get('/properties/{property}/test-ses', [\App\Http\Controllers\Property\PropertyController::class, 'testSes'])->name('properties.test-ses');
         Route::get('/audit', [\App\Http\Controllers\AuditController::class, 'index'])->name('audit.index');
         Route::get('/activity', [\App\Http\Controllers\AuditController::class, 'activity'])->name('activity.index');
