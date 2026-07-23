@@ -28,9 +28,7 @@ class SettingsController extends Controller
         $settings = $tenant->settings ?? [];
 
         foreach ($validated as $key => $value) {
-            if ($request->has($key)) {
-                $settings[$key] = $value;
-            }
+            $settings[$key] = $value;
         }
 
         $tenant->update(['settings' => $settings]);
