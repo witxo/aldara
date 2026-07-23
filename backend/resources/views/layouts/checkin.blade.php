@@ -8,6 +8,7 @@
     <title>Check-in Online — {{ config('app.name') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.x/dist/cdn.min.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         .step-indicator { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
@@ -15,6 +16,7 @@
         .step-active { background-color: #2563eb; color: white; }
         .step-completed { background-color: #16a34a; color: white; }
         .step-pending { background-color: #e5e7eb; color: #6b7280; }
+        [x-cloak] { display: none !important; }
     </style>
     @stack('head')
 </head>

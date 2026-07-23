@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="{{ asset('images/logo_aldara.png') }}">
     <title>@yield('title', 'Panel') — {{ config('app.name') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>[x-cloak] { display: none !important; }</style>
     @livewireStyles
     @stack('head')
 </head>

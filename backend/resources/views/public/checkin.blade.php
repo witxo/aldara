@@ -41,20 +41,11 @@
             <div id="guests-container">
                 <div class="mb-6 p-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-semibold text-blue-700">📷 Escanear DNI / Pasaporte</span>
+                        <span class="text-sm font-semibold text-blue-700">Escanear DNI / Pasaporte</span>
                         <span class="text-xs text-blue-500">Los datos se rellenarán automáticamente</span>
                     </div>
                     <p class="text-xs text-blue-600 mb-3">Tus datos no salen de tu dispositivo. El escaneo se procesa localmente.</p>
-                    <div class="flex gap-3">
-                        <button type="button" onclick="openCamera()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition flex items-center gap-2">
-                            <span>📸</span> Capturar con cámara
-                        </button>
-                        <button type="button" onclick="document.getElementById('gallery-input').click()" class="bg-white text-blue-600 border border-blue-300 px-4 py-2 rounded-lg text-sm hover:bg-blue-100 transition flex items-center gap-2">
-                            <span>🖼️</span> Seleccionar foto
-                        </button>
-                    </div>
-                    <input id="gallery-input" type="file" accept="image/*" class="hidden" onchange="scanDocument(this.files[0], getFieldMappings())">
-                    <div id="scan-status" class="mt-2 text-xs text-gray-500 hidden"></div>
+                    <x-document-scanner prefix="guests[0][" suffix="]" />
                 </div>
 
                 <h3 class="font-semibold mb-3">Datos del viajero principal</h3>
@@ -146,20 +137,12 @@
 @endsection
 
 @push('head')
-<script src="{{ asset('js/scanner.js') }}"></script>
+<script src="{{ asset('js/mrz-parser.js') }}"></script>
+<script src="{{ asset('js/document-scanner.js') }}"></script>
 @endpush
 
 @push('scripts')
-<div id="camera-modal" class="fixed inset-0 bg-black z-50 hidden flex flex-col">
-    <video id="camera-preview" class="flex-1 w-full object-cover"></video>
-    <div class="absolute bottom-8 left-0 right-0 flex justify-center gap-6">
-        <button type="button" onclick="capturePhoto()" class="bg-white rounded-full w-16 h-16 shadow-lg flex items-center justify-center text-2xl hover:bg-gray-100 transition">📸</button>
-        <button type="button" onclick="closeCamera()" class="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:bg-red-700 transition">Cancelar</button>
-    </div>
-</div>
 <script>
-    window.SCAN_FIELD_PREFIX = 'guests[0][';
-    window.SCAN_FIELD_SUFFIX = ']';
     let guestCount = 1;
 
     const maxGuests = {{ config('checkin.max_guests', 20) }};
