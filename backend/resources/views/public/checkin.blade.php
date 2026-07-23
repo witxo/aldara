@@ -46,15 +46,14 @@
                     </div>
                     <p class="text-xs text-blue-600 mb-3">Tus datos no salen de tu dispositivo. El escaneo se procesa localmente.</p>
                     <div class="flex gap-3">
-                        <button type="button" onclick="document.getElementById('scan-input').click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition flex items-center gap-2">
+                        <button type="button" onclick="openCamera()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition flex items-center gap-2">
                             <span>📸</span> Capturar con cámara
                         </button>
                         <button type="button" onclick="document.getElementById('gallery-input').click()" class="bg-white text-blue-600 border border-blue-300 px-4 py-2 rounded-lg text-sm hover:bg-blue-100 transition flex items-center gap-2">
                             <span>🖼️</span> Seleccionar foto
                         </button>
                     </div>
-                    <input id="scan-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="scanDocument(this)">
-                    <input id="gallery-input" type="file" accept="image/*" class="hidden" onchange="scanDocument(this)">
+                    <input id="gallery-input" type="file" accept="image/*" class="hidden" onchange="scanDocument(this.files[0], getFieldMappings())">
                     <div id="scan-status" class="mt-2 text-xs text-gray-500 hidden"></div>
                 </div>
 
@@ -146,196 +145,23 @@
 @endif
 @endsection
 
+@push('head')
+<script src="{{ asset('js/scanner.js') }}"></script>
+@endpush
+
 @push('scripts')
+<div id="camera-modal" class="fixed inset-0 bg-black z-50 hidden flex flex-col">
+    <video id="camera-preview" class="flex-1 w-full object-cover"></video>
+    <div class="absolute bottom-8 left-0 right-0 flex justify-center gap-6">
+        <button type="button" onclick="capturePhoto()" class="bg-white rounded-full w-16 h-16 shadow-lg flex items-center justify-center text-2xl hover:bg-gray-100 transition">📸</button>
+        <button type="button" onclick="closeCamera()" class="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:bg-red-700 transition">Cancelar</button>
+    </div>
+</div>
 <script>
+    window.SCAN_FIELD_PREFIX = 'guests[0][';
+    window.SCAN_FIELD_SUFFIX = ']';
     let guestCount = 1;
 
-    async function scanDocument(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        const statusEl = document.getElementById('scan-status');
-        statusEl.classList.remove('hidden');
-        statusEl.innerHTML = '⏳ Procesando imagen...';
-        statusEl.className = 'mt-2 text-xs text-gray-500';
-
-        try {
-            const img = new Image();
-            img.src = URL.createObjectURL(file);
-            await new Promise(resolve => { img.onload = resolve; });
-
-            const { data } = await Tesseract.recognize(img.src, 'spa', {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        statusEl.innerHTML = `⏳ Escaneando... ${Math.round(m.progress * 100)}%`;
-                    }
-                }
-            });
-
-            URL.revokeObjectURL(img.src);
-            const text = data.text;
-            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-
-            statusEl.innerHTML = '✅ Documento escaneado. Rellenando formulario...';
-            statusEl.className = 'mt-2 text-xs text-green-600';
-
-            const parsed = parseSpanishId(text, lines);
-
-            if (parsed.firstName) document.querySelector('[name="guests[0][first_name]"]').value = parsed.firstName;
-            if (parsed.lastName) document.querySelector('[name="guests[0][last_name]"]').value = parsed.lastName;
-            if (parsed.documentType) document.querySelector('[name="guests[0][document_type]"]').value = parsed.documentType;
-            if (parsed.documentNumber) document.querySelector('[name="guests[0][document_number]"]').value = parsed.documentNumber;
-            if (parsed.nationality) {
-                const sel = document.querySelector('[name="guests[0][nationality]"]');
-                if ([...sel.options].some(o => o.value === parsed.nationality)) {
-                    sel.value = parsed.nationality;
-                } else {
-                    sel.value = 'other';
-                }
-            }
-            if (parsed.birthDate) document.querySelector('[name="guests[0][birth_date]"]').value = parsed.birthDate;
-
-            if (parsed.hasAny) {
-                statusEl.innerHTML = '✅ Datos rellenados desde el documento. Revísalos antes de enviar.';
-                statusEl.className = 'mt-2 text-xs text-green-600';
-            } else {
-                statusEl.innerHTML = '⚠️ No se pudieron reconocer datos. Intenta con una foto más clara.';
-                statusEl.className = 'mt-2 text-xs text-orange-600';
-            }
-        } catch (e) {
-            statusEl.innerHTML = '❌ Error al escanear: ' + e.message;
-            statusEl.className = 'mt-2 text-xs text-red-600';
-        }
-
-        input.value = '';
-    }
-
-    function parseSpanishId(text, lines) {
-        const result = { firstName: null, lastName: null, documentType: null, documentNumber: null, nationality: null, birthDate: null, gender: null, hasAny: false };
-
-        const upperText = text.toUpperCase();
-
-        // --- 1) Try MRZ parsing first (most reliable) ---
-        let mrzLine = null, mrzIdx = -1;
-        lines.forEach((l, i) => {
-            const t = l.toUpperCase().replace(/\s/g, '');
-            if (t.startsWith('IDESP') || t.startsWith('P<')) { mrzLine = t; mrzIdx = i; }
-        });
-        if (mrzLine && mrzLine.startsWith('IDESP')) {
-            // Spanish DNI TD1: 3 lines, birthDate in line 2
-            const l2 = mrzIdx + 1 < lines.length ? lines[mrzIdx + 1].toUpperCase().replace(/\s/g, '') : '';
-            const namePart = mrzLine.replace('IDESP', '').split('<<');
-            if (namePart.length > 0) result.lastName = namePart[0].replace(/</g, ' ').trim();
-            if (namePart.length > 1) result.firstName = namePart[1].replace(/</g, ' ').trim();
-            const docM = l2.match(/(\d{8})([A-Z])/);
-            if (docM) { result.documentNumber = docM[1] + docM[2]; result.documentType = 'dni'; }
-            const dobM = l2.match(/(\d{6})\d[MFC]/);
-            if (dobM) result.birthDate = formatMrzDate(dobM[1]);
-            if (l2.includes('ESP')) result.nationality = 'ES';
-            if (/[MFC]/.test(l2)) result.gender = /M/.test(l2) ? 'male' : (/F/.test(l2) ? 'female' : '');
-            result.hasAny = true;
-            return result;
-        }
-        if (mrzLine && mrzLine.startsWith('P<')) {
-            // Passport TD3: 2 lines
-            const l2 = mrzIdx + 1 < lines.length ? lines[mrzIdx + 1].toUpperCase().replace(/\s/g, '') : '';
-            const namePart = mrzLine.replace(/P<[A-Z]{3}</, '');
-            const names = namePart.split('<<');
-            if (names.length > 0) result.lastName = names[0].replace(/</g, ' ').trim();
-            if (names.length > 1) result.firstName = names[1].replace(/</g, ' ').trim();
-            const docM = l2.match(/([A-Z]{1,2})(\d{6,7})/);
-            if (docM) { result.documentNumber = docM[1] + docM[2]; result.documentType = 'passport'; }
-            const natM = l2.match(/[A-Z]{3}/);
-            if (natM) result.nationality = natM[0] === 'ESP' ? 'ES' : natM[0];
-            const dobM = l2.match(/(\d{6})\d[MFC]/);
-            if (dobM) result.birthDate = formatMrzDate(dobM[1]);
-            if (/[MFC]/.test(l2)) result.gender = /M/.test(l2) ? 'male' : (/F/.test(l2) ? 'female' : '');
-            result.hasAny = true;
-            return result;
-        }
-
-        // --- 2) Fallback: field-based OCR parsing ---
-        const nieMatch = text.match(/\b([XYZ]\d{7}[A-Z])\b/);
-        const dniMatch = text.match(/\b(\d{8}[A-Z])\b/);
-        if (nieMatch) {
-            result.documentNumber = nieMatch[1];
-            result.documentType = 'nie';
-        } else if (dniMatch) {
-            result.documentNumber = dniMatch[1];
-            result.documentType = 'dni';
-        } else if (upperText.includes('PASAPORTE') || upperText.includes('PASSPORT')) {
-            result.documentType = 'passport';
-            const linesStr = lines.join(' ');
-            const numMatch = linesStr.match(/\b([A-Z]{1,2}\d{5,8}[A-Z]?)\b/);
-            if (numMatch) result.documentNumber = numMatch[1];
-        }
-
-        let apellidosIdx = -1, nombreIdx = -1;
-        lines.forEach((l, i) => {
-            const u = l.toUpperCase().replace(/[^A-Z\s]/g, '');
-            if (u.startsWith('APELLID') && apellidosIdx === -1) apellidosIdx = i;
-            if ((u.startsWith('NOMBRE') || u === 'NOM') && nombreIdx === -1) nombreIdx = i;
-        });
-
-        if (apellidosIdx >= 0 && apellidosIdx + 1 < lines.length) {
-            const name = lines[apellidosIdx + 1].replace(/[^A-Za-zÀ-ÿÑñ\s\'-]/g, '').trim();
-            if (name.length >= 2) result.lastName = name.split(/\s+/).filter(w => w.length > 1).join(' ').substring(0, 50);
-        }
-        if (nombreIdx >= 0 && nombreIdx + 1 < lines.length) {
-            const name = lines[nombreIdx + 1].replace(/[^A-Za-zÀ-ÿÑñ\s\'-]/g, '').trim();
-            if (name.length >= 2) result.firstName = name.split(/\s+/).filter(w => w.length > 1).join(' ').substring(0, 50);
-        }
-
-        const nationalityMap = { 'ESP': 'ES', 'ESPAÑA': 'ES', 'ESPANA': 'ES', 'SPAIN': 'ES', 'FRANCE': 'FR', 'FRANCIA': 'FR', 'GERMANY': 'DE', 'ALEMANIA': 'DE', 'ITALIA': 'IT', 'ITALY': 'IT', 'UK': 'GB', 'REINO UNIDO': 'GB', 'PORTUGAL': 'PT', 'USA': 'US', 'ESTADOS UNIDOS': 'US' };
-        for (const [key, val] of Object.entries(nationalityMap)) {
-            if (upperText.includes(key)) { result.nationality = val; break; }
-        }
-        if (!result.nationality) {
-            const natMatch = text.match(/NACIONALIDAD[:\s]*([A-Z]{2,4})/i);
-            if (natMatch) {
-                const code = natMatch[1].toUpperCase();
-                result.nationality = code.length === 2 ? code : (nationalityMap[code] || null);
-            }
-        }
-
-        const dateRegex = /(\d{2})[\/-](\d{2})[\/-](\d{4})/g;
-        let dateMatch;
-        const allDates = [];
-        while ((dateMatch = dateRegex.exec(text)) !== null) {
-            const day = parseInt(dateMatch[1]), month = parseInt(dateMatch[2]), year = parseInt(dateMatch[3]);
-            if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900 && year <= 2010) {
-                allDates.push({ day, month, year, full: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}` });
-            }
-        }
-        if (allDates.length === 1) {
-            result.birthDate = allDates[0].full;
-        } else if (allDates.length > 1) {
-            const nacIdx = upperText.indexOf('NACIMIENTO');
-            if (nacIdx >= 0) {
-                const after = upperText.substring(nacIdx, nacIdx + 100);
-                const m = dateRegex.exec(after);
-                if (m) {
-                    const d = parseInt(m[1]), mo = parseInt(m[2]), y = parseInt(m[3]);
-                    if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12 && y >= 1900 && y <= 2010) {
-                        result.birthDate = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                    }
-                }
-            }
-            if (!result.birthDate) result.birthDate = allDates[0].full;
-        }
-
-        if (upperText.includes('VARON')) result.gender = 'male';
-        else if (upperText.includes('MUJER')) result.gender = 'female';
-
-        result.hasAny = result.documentType || result.documentNumber || result.firstName || result.lastName;
-        return result;
-    }
-
-    function formatMrzDate(mrzDate) {
-        if (mrzDate.length !== 6) return mrzDate;
-        const prefix = parseInt(mrzDate.substring(0, 2)) > 50 ? '19' : '20';
-        return `${prefix}${mrzDate.substring(0, 2)}-${mrzDate.substring(2, 4)}-${mrzDate.substring(4, 6)}`;
-    }
     const maxGuests = {{ config('checkin.max_guests', 20) }};
     const totalGuests = {{ $reservation->adults + $reservation->children }};
 
