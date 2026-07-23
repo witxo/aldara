@@ -299,8 +299,21 @@ var MRZParser = {
     };
   },
 
+  _precleanNameLine: function (raw) {
+    var s = raw || '';
+    s = s
+      .replace(/SK/g, '<').replace(/KS/g, '<')
+      .replace(/SL/g, '<').replace(/LS/g, '<')
+      .replace(/[KL]{2,}/g, '<<')
+      .replace(/<[KL]/g, '<<')
+      .replace(/[KL]</g, '<<')
+      .replace(/^[KL]+/, '')
+      .replace(/[KL]+$/, '');
+    return s;
+  },
+
   _splitNames: function (raw) {
-    var clean = raw || '';
+    var clean = this._precleanNameLine(raw);
     var surname = '';
     var givenNames = '';
 
@@ -308,7 +321,7 @@ var MRZParser = {
     if (parts.length >= 2) {
       surname = this._cleanNameToken(parts[0]);
       givenNames = this._cleanNameToken(parts.slice(1).join(' '));
-      return { surname: surname, givenNames: givenNames };
+      if (surname && givenNames) return { surname: surname, givenNames: givenNames };
     }
 
     var tokens = clean.split(/<+/).filter(function(t) {
