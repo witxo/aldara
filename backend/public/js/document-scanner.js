@@ -227,6 +227,7 @@ document.addEventListener('alpine:init', function () {
             Tesseract.createWorker('eng').then(function (worker) {
               if (timedOut) { try { worker.terminate(); } catch(e) {} return; }
               return worker.setParameters({
+                tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
                 tessedit_pageseg_mode: '6'
               }).then(function () {
                 if (timedOut) { try { worker.terminate(); } catch(e) {} return null; }
