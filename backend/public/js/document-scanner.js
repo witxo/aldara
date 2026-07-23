@@ -274,8 +274,8 @@ document.addEventListener('alpine:init', function () {
           canvas.height = cropH;
           var ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, cropY, img.width, cropH, 0, 0, img.width, cropH);
-          self._preprocess(ctx);
           self._canvasEl = canvas;
+          self._preprocess(ctx);
           self._recognizeMRZ();
           URL.revokeObjectURL(img.src);
         };
