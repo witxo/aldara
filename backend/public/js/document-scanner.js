@@ -238,10 +238,19 @@ document.addEventListener('alpine:init', function () {
             }
           } else {
             if (self._captureCount >= self.maxCaptures) {
-              self.status = 'error';
-              self.errorMessage = parsed
-                ? 'Confianza baja (' + Math.round(parsed.confidence * 100) + '%). Intente con mejor iluminación.'
-                : 'No se detectó MRZ válida. Asegúrese de que la franja de caracteres sea visible y esté bien iluminada.';
+              if (self._bestResult && self._bestConfidence >= self.confidenceThreshold) {
+                self.lastResult = self._bestResult;
+                self.lastResultFields = {};
+                self._populateForm(self.lastResult);
+                self.status = 'success';
+                logger('Using best result (conf=' + self._bestConfidence.toFixed(2) + ') after max captures');
+                setTimeout(function () { self.closeCamera(); }, 1200);
+              } else {
+                self.status = 'error';
+                self.errorMessage = parsed
+                  ? 'Confianza baja (' + Math.round(parsed.confidence * 100) + '%). Intente con mejor iluminación.'
+                  : 'No se detectó MRZ válida. Asegúrese de que la franja de caracteres sea visible y esté bien iluminada.';
+              }
             } else {
               self.status = 'camera';
               logger('No MRZ (attempt ' + self._captureCount + '/' + self.maxCaptures + ')');
@@ -286,6 +295,26 @@ document.addEventListener('alpine:init', function () {
         img.src = URL.createObjectURL(file);
       },
 
+      _mapNationality: function (code) {
+        if (!code || code.length < 2) return code;
+        if (code.length === 2) return code;
+        var map = {
+          'ESP': 'ES', 'FRA': 'FR', 'GBR': 'GB', 'DEU': 'DE',
+          'ITA': 'IT', 'PRT': 'PT', 'BEL': 'BE', 'NLD': 'NL',
+          'CHE': 'CH', 'AUT': 'AT', 'DNK': 'DK', 'SWE': 'SE',
+          'NOR': 'NO', 'FIN': 'FI', 'GRC': 'GR', 'IRL': 'IE',
+          'POL': 'PL', 'CZE': 'CZ', 'HUN': 'HU', 'ROU': 'RO',
+          'BGR': 'BG', 'HRV': 'HR', 'SVK': 'SK', 'SVN': 'SI',
+          'LTU': 'LT', 'LVA': 'LV', 'EST': 'EE', 'USA': 'US',
+          'CAN': 'CA', 'MEX': 'MX', 'BRA': 'BR', 'ARG': 'AR',
+          'CHL': 'CL', 'COL': 'CO', 'PER': 'PE', 'JPN': 'JP',
+          'CHN': 'CN', 'IND': 'IN', 'RUS': 'RU', 'TUR': 'TR',
+          'AUS': 'AU', 'NZL': 'NZ', 'MAR': 'MA', 'DZA': 'DZ',
+          'TUN': 'TN', 'EGY': 'EG', 'ZAF': 'ZA'
+        };
+        return map[code.toUpperCase()] || code.substring(0, 2);
+      },
+
       _populateForm: function (record) {
         if (!record) return;
         var self = this;
@@ -295,13 +324,35 @@ document.addEventListener('alpine:init', function () {
         };
 
         var fields = {};
-        if (record.givenNames) fields['first_name'] = record.givenNames;
-        if (record.surname) fields['last_name'] = record.surname;
+        var firstName = record.givenNames || '';
+        var lastName = record.surname || '';
+        if (record.docType === 'dni' && record.givenNames) {
+          var tokens = record.givenNames.replace(/\s+/g, ' ').trim().split(' ');
+          if (tokens.length >= 2) {
+            firstName = tokens.pop();
+            lastName = (record.surname + ' ' + tokens.join(' ')).trim();
+          } else {
+            firstName = record.givenNames;
+          }
+        }
+        if (firstName) fields['first_name'] = firstName;
+        if (lastName) fields['last_name'] = lastName;
         if (record.documentNumber) fields['document_number'] = record.documentNumber;
         if (record.birthDate) fields['birth_date'] = record.birthDate;
-        if (record.documentType) fields['document_type'] = record.documentType;
-        if (record.nationality) fields['nationality'] = record.nationality;
-        if (record.sex) fields['gender'] = record.sex;
+
+        if (record.docType) {
+          fields['document_type'] = record.docType;
+        } else if (record.documentType) {
+          fields['document_type'] = record.documentType;
+        }
+
+        if (record.nationality) {
+          fields['nationality'] = self._mapNationality(record.nationality);
+        }
+
+        if (record.sex) {
+          fields['gender'] = record.sex === 'M' ? 'male' : (record.sex === 'F' ? 'female' : '');
+        }
 
         Object.keys(fields).forEach(function (key) {
           var name = f(key);
@@ -319,6 +370,8 @@ document.addEventListener('alpine:init', function () {
               }
               if (!found && key === 'nationality') {
                 el.value = 'other';
+              } else if (!found && key === 'gender') {
+                el.value = 'other';
               }
             } else {
               el.value = fields[key];
@@ -333,7 +386,7 @@ document.addEventListener('alpine:init', function () {
         });
 
         self.lastResultFields = fields;
-        logger('Form populated:', Object.keys(fields).join(', '));
+        logger('Form populated:', JSON.stringify(fields));
       },
 
       retry: function () {
