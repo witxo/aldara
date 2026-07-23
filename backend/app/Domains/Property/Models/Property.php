@@ -54,7 +54,7 @@ class Property extends Model
 
     public function getLogoUrlAttribute(): ?string
     {
-        return $this->logo ? asset('storage/' . $this->logo) : null;
+        return $this->logo ? route('property.logo', $this) : null;
     }
 
     public function reservations()

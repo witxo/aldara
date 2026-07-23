@@ -74,3 +74,5 @@ Route::prefix('/checkin')->name('public.checkin.')->group(function () {
     Route::get('/{token}', [\App\Http\Controllers\PublicCheckinController::class, 'show'])->name('show');
     Route::post('/{token}', [\App\Http\Controllers\PublicCheckinController::class, 'submit'])->name('submit');
 });
+
+Route::get('/property-logo/{property}', [\App\Http\Controllers\Property\PropertyController::class, 'logo'])->name('property.logo');

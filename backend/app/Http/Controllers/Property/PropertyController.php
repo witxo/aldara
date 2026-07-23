@@ -133,4 +133,21 @@ class PropertyController extends Controller
 
         return redirect()->route('properties.show', $property)->with('success', 'Conexión SES exitosa. Código: ' . $result['codigo']);
     }
+
+    public function logo(Property $property)
+    {
+        if (!$property->logo) {
+            abort(404);
+        }
+
+        $path = storage_path('app/public/' . $property->logo);
+
+        if (!file_exists($path)) {
+            abort(404);
+        }
+
+        return response()->file($path, [
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
 }
