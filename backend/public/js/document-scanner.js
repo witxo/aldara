@@ -214,66 +214,91 @@ document.addEventListener('alpine:init', function () {
         this.status = 'processing';
         var self = this;
 
-        Tesseract.recognize(this._canvasEl, 'eng', {
-          psm: 6,
-          config: { tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<' },
-          logger: function (m) {
-            if (m.status === 'recognizing text' && self.debug) {
-              logger('OCR:', Math.round(m.progress * 100) + '%');
-            }
-          }
-        }).then(function (result) {
-          var text = result.data.text;
-          logger('OCR result:', text.replace(/\n/g, ' | '));
+        var timedOut = false;
+        var timeoutId = setTimeout(function () {
+          timedOut = true;
+          logger('OCR timed out');
+          self._handleResult(null, true);
+        }, 15000);
 
-          var parsed = MRZParser.parse(text);
-          self._captureCount++;
+        Tesseract.createWorker('eng').then(function (worker) {
+          if (timedOut) { worker.terminate(); return; }
+          return worker.setParameters({
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+            tessedit_pageseg_mode: '6'
+          }).then(function () {
+            if (timedOut) { worker.terminate(); return null; }
+            return worker.recognize(self._canvasEl);
+          }).then(function (result) {
+            if (timedOut) { worker.terminate(); return; }
+            clearTimeout(timeoutId);
+            worker.terminate();
+            var text = result && result.data ? result.data.text : '';
+            logger('OCR result:', text.replace(/\n/g, ' | '));
+            self._handleResult(text, false);
+          }).catch(function (err) {
+            clearTimeout(timeoutId);
+            worker.terminate();
+            logger('Tesseract error:', err);
+            self._handleResult(null, false);
+          });
+        }).catch(function (err) {
+          clearTimeout(timeoutId);
+          logger('Tesseract init error:', err);
+          self._handleResult(null, false);
+        });
+      },
 
-          if (parsed && parsed.confidence > self._bestConfidence) {
-            self._bestResult = parsed;
-            self._bestConfidence = parsed.confidence;
-          }
+      _handleResult: function (text, timedOut) {
+        this._captureCount++;
+        var parsed = text ? MRZParser.parse(text) : null;
+        logger('parsed', parsed);
 
-          var accepted = parsed &&
-            parsed.confidence >= self.confidenceThreshold &&
-            parsed.documentNumber &&
-            (parsed.surname || parsed.givenNames);
+        if (parsed && parsed.confidence > this._bestConfidence) {
+          this._bestResult = parsed;
+          this._bestConfidence = parsed.confidence;
+        }
 
-          if (accepted) {
-            self.lastResult = self._bestResult || parsed;
-            self._populateForm(self.lastResult);
-            self.status = 'success';
-            logger('Accepted: conf=' + parsed.confidence.toFixed(2));
+        var accepted = parsed &&
+          parsed.confidence >= this.confidenceThreshold &&
+          parsed.documentNumber &&
+          (parsed.surname || parsed.givenNames);
+
+        if (accepted) {
+          this.lastResult = this._bestResult || parsed;
+          this._populateForm(this.lastResult);
+          this.status = 'success';
+          logger('Accepted: conf=' + parsed.confidence.toFixed(2));
+          var self = this;
+          setTimeout(function () { self.closeCamera(); }, 1200);
+          return;
+        }
+
+        if (this._captureCount >= this.maxCaptures) {
+          if (this._bestResult &&
+              this._bestResult.confidence >= this.confidenceThreshold &&
+              this._bestResult.documentNumber) {
+            this.lastResult = this._bestResult;
+            this._populateForm(this._bestResult);
+            this.status = 'success';
+            logger('Using best result (conf=' + this._bestConfidence.toFixed(2) + ')');
+            var self = this;
             setTimeout(function () { self.closeCamera(); }, 1200);
             return;
           }
+          this._fail(parsed
+            ? 'Confianza baja (' + Math.round(parsed.confidence * 100) + '%). Intente con mejor iluminación.'
+            : (timedOut ? 'Tiempo de espera agotado. Pruebe con una foto en lugar de la cámara.'
+                        : 'No se detectó MRZ válida. Asegúrese de que la franja de caracteres sea visible y esté bien iluminada.'));
+          return;
+        }
 
-          if (self._captureCount >= self.maxCaptures) {
-            if (self._bestResult &&
-                self._bestResult.confidence >= self.confidenceThreshold &&
-                self._bestResult.documentNumber) {
-              self.lastResult = self._bestResult;
-              self._populateForm(self._bestResult);
-              self.status = 'success';
-              logger('Using best result (conf=' + self._bestConfidence.toFixed(2) + ') after max captures');
-              setTimeout(function () { self.closeCamera(); }, 1200);
-              return;
-            }
-            self._fail(parsed
-              ? 'Confianza baja (' + Math.round(parsed.confidence * 100) + '%). Intente con mejor iluminación.'
-              : 'No se detectó MRZ válida. Asegúrese de que la franja de caracteres sea visible y esté bien iluminada.');
-            return;
-          }
-
-          self.status = 'camera';
-          logger('Retry ' + self._captureCount + '/' + self.maxCaptures + (parsed ? ' conf=' + parsed.confidence.toFixed(2) : ' no MRZ'));
-          self._captureTimer = setTimeout(function () {
-            if (self.showCamera) self.capture();
-          }, 600);
-        }).catch(function (err) {
-          logger('Tesseract error:', err);
-          self._fail('Error al procesar: revise la iluminación e intente de nuevo');
-        });
+        this.status = 'camera';
+        logger('Retry ' + this._captureCount + '/' + this.maxCaptures + (parsed ? ' conf=' + parsed.confidence.toFixed(2) : ' no MRZ'));
+        var self = this;
+        this._captureTimer = setTimeout(function () {
+          if (self.showCamera) self.capture();
+        }, 600);
       },
 
       uploadFile: function (event) {
