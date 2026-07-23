@@ -29,8 +29,8 @@ class MrzController extends Controller
             'format' => null,
             'docType' => $this->mapType($result['type'] ?? ''),
             'documentNumber' => $result['card_no'] ?? '',
-            'surname' => $result['last_name'] ?? '',
-            'givenNames' => $result['first_name'] ?? '',
+            'surname' => str_replace('<', ' ', $result['last_name'] ?? ''),
+            'givenNames' => str_replace('<', ' ', $result['first_name'] ?? ''),
             'birthDate' => $result['date_of_birth'] ?? '',
             'expiryDate' => $result['date_of_expiry'] ?? '',
             'sex' => $result['sex'] ?? '',
@@ -76,6 +76,13 @@ class MrzController extends Controller
             !in_array($lines[0][0], ['I', 'P', 'A', 'C', 'V']) &&
             substr($lines[0], 1, 3) === 'ESP') {
             $lines[0] = 'I' . $lines[0];
+        }
+
+        // Clean name line (third line for TD1): convert common OCR noise separators
+        if (isset($lines[2])) {
+            $lines[2] = preg_replace('/SS/', '<<', $lines[2]);
+            $lines[2] = preg_replace('/[KL]{2,}/', '<<', $lines[2]);
+            $lines[2] = preg_replace('/<[KL]/', '<<', $lines[2]);
         }
 
         return implode("\n", array_slice($lines, 0, 3));
