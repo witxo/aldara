@@ -38,6 +38,18 @@ echo "=== 5. Optimizando Laravel ==="
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan config:cache || true
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan route:cache || true
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan view:cache || true
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan livewire:publish --assets --force || true
+
+echo ""
+echo "=== 6. Sync backend a Plesk (setup híbrido) ==="
+echo "Si tienes el backend servido por Plesk, ejecuta manualmente:"
+echo "  rsync -a --delete --exclude={'vendor/','node_modules/','.env','.git','storage/'} \\"
+echo "    /opt/aldara/backend/ /var/www/vhosts/ivema.es/aldara/"
+echo "  cd /var/www/vhosts/ivema.es/aldara"
+echo "  php artisan livewire:publish --assets --force"
+echo "  php artisan config:cache"
+echo "  php artisan route:cache"
+echo "  php artisan view:cache"
 
 echo ""
 echo "=== ¡Desplegado! ==="
