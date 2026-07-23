@@ -215,6 +215,46 @@
 
         const upperText = text.toUpperCase();
 
+        // --- 1) Try MRZ parsing first (most reliable) ---
+        let mrzLine = null, mrzIdx = -1;
+        lines.forEach((l, i) => {
+            const t = l.toUpperCase().replace(/\s/g, '');
+            if (t.startsWith('IDESP') || t.startsWith('P<')) { mrzLine = t; mrzIdx = i; }
+        });
+        if (mrzLine && mrzLine.startsWith('IDESP')) {
+            // Spanish DNI TD1: 3 lines, birthDate in line 2
+            const l2 = mrzIdx + 1 < lines.length ? lines[mrzIdx + 1].toUpperCase().replace(/\s/g, '') : '';
+            const namePart = mrzLine.replace('IDESP', '').split('<<');
+            if (namePart.length > 0) result.lastName = namePart[0].replace(/</g, ' ').trim();
+            if (namePart.length > 1) result.firstName = namePart[1].replace(/</g, ' ').trim();
+            const docM = l2.match(/(\d{8})([A-Z])/);
+            if (docM) { result.documentNumber = docM[1] + docM[2]; result.documentType = 'dni'; }
+            const dobM = l2.match(/(\d{6})\d[MFC]/);
+            if (dobM) result.birthDate = formatMrzDate(dobM[1]);
+            if (l2.includes('ESP')) result.nationality = 'ES';
+            if (/[MFC]/.test(l2)) result.gender = /M/.test(l2) ? 'male' : (/F/.test(l2) ? 'female' : '');
+            result.hasAny = true;
+            return result;
+        }
+        if (mrzLine && mrzLine.startsWith('P<')) {
+            // Passport TD3: 2 lines
+            const l2 = mrzIdx + 1 < lines.length ? lines[mrzIdx + 1].toUpperCase().replace(/\s/g, '') : '';
+            const namePart = mrzLine.replace(/P<[A-Z]{3}</, '');
+            const names = namePart.split('<<');
+            if (names.length > 0) result.lastName = names[0].replace(/</g, ' ').trim();
+            if (names.length > 1) result.firstName = names[1].replace(/</g, ' ').trim();
+            const docM = l2.match(/([A-Z]{1,2})(\d{6,7})/);
+            if (docM) { result.documentNumber = docM[1] + docM[2]; result.documentType = 'passport'; }
+            const natM = l2.match(/[A-Z]{3}/);
+            if (natM) result.nationality = natM[0] === 'ESP' ? 'ES' : natM[0];
+            const dobM = l2.match(/(\d{6})\d[MFC]/);
+            if (dobM) result.birthDate = formatMrzDate(dobM[1]);
+            if (/[MFC]/.test(l2)) result.gender = /M/.test(l2) ? 'male' : (/F/.test(l2) ? 'female' : '');
+            result.hasAny = true;
+            return result;
+        }
+
+        // --- 2) Fallback: field-based OCR parsing ---
         const nieMatch = text.match(/\b([XYZ]\d{7}[A-Z])\b/);
         const dniMatch = text.match(/\b(\d{8}[A-Z])\b/);
         if (nieMatch) {
@@ -289,6 +329,12 @@
 
         result.hasAny = result.documentType || result.documentNumber || result.firstName || result.lastName;
         return result;
+    }
+
+    function formatMrzDate(mrzDate) {
+        if (mrzDate.length !== 6) return mrzDate;
+        const prefix = parseInt(mrzDate.substring(0, 2)) > 50 ? '19' : '20';
+        return `${prefix}${mrzDate.substring(0, 2)}-${mrzDate.substring(2, 4)}-${mrzDate.substring(4, 6)}`;
     }
     const maxGuests = {{ config('checkin.max_guests', 20) }};
     const totalGuests = {{ $reservation->adults + $reservation->children }};

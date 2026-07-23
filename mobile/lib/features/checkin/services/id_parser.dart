@@ -49,22 +49,18 @@ class IdParser {
         .where((l) => l.isNotEmpty)
         .toList();
 
-    String? fullMrz;
-    for (final line in lines) {
-      if (line.startsWith('IDESP') ||
-          line.startsWith('P<ESP') ||
-          line.startsWith('P<')) {
-        fullMrz = line;
-        break;
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      if (line.startsWith('IDESP')) {
+        final mrzLines = [line];
+        if (i + 1 < lines.length) mrzLines.add(lines[i + 1]);
+        if (i + 2 < lines.length) mrzLines.add(lines[i + 2]);
+        return _parseSpanishIdMrz(mrzLines.join('\n'));
       }
-    }
-
-    if (fullMrz == null) return null;
-
-    if (fullMrz.startsWith('IDESP')) {
-      return _parseSpanishIdMrz(fullMrz);
-    } else if (fullMrz.startsWith('P<')) {
-      return _parsePassportMrz(fullMrz, lines);
+      if (line.startsWith('P<ESP') || line.startsWith('P<')) {
+        final secondLine = i + 1 < lines.length ? lines[i + 1] : '';
+        return _parsePassportMrz(line, secondLine);
+      }
     }
 
     return null;
@@ -141,7 +137,7 @@ class IdParser {
   }
 
   /// Parse passport MRZ lines (TD3 format)
-  static ParsedId? _parsePassportMrz(String firstLine, List<String> lines) {
+  static ParsedId? _parsePassportMrz(String firstLine, String secondLine) {
     // P<ESP<<SURNAME<<NAME<<<<<<<<<<<<<<<<
     // PA123456<7ESP8001010M2001017<<<<<<<<<<
     String lastName = '';
@@ -159,9 +155,7 @@ class IdParser {
         ? names[1].replaceAll('<', ' ').trim()
         : '';
 
-    if (lines.length >= 2) {
-      final secondLine = lines[1].trim();
-
+    if (secondLine.isNotEmpty) {
       final docMatch =
           RegExp(r'([A-Z]{1,2})(\d{6,7})').firstMatch(secondLine);
       if (docMatch != null) {
