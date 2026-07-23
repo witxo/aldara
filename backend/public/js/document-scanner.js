@@ -1,20 +1,18 @@
 (function () {
 'use strict';
 
-function log(debug) {
+function log() {
   return function () {
-    if (debug) {
-      var args = Array.prototype.slice.call(arguments);
-      args.unshift('[DocScanner]');
-      console.log.apply(console, args);
-    }
+    var args = Array.prototype.slice.call(arguments);
+    args.unshift('[DocScanner]');
+    console.log.apply(console, args);
   };
 }
 
 document.addEventListener('alpine:init', function () {
   Alpine.data('documentScanner', function (config) {
     config = config || {};
-    var logger = log(config.debug || false);
+    var logger = log();
 
     return {
       prefix: config.prefix || '',
@@ -214,39 +212,82 @@ document.addEventListener('alpine:init', function () {
         this.status = 'processing';
         var self = this;
 
+        logger('Starting OCR...');
+
         var timedOut = false;
         var timeoutId = setTimeout(function () {
           timedOut = true;
-          logger('OCR timed out');
+          logger('OCR TIMED OUT after 60s');
           self._handleResult(null, true);
-        }, 15000);
+        }, 60000);
 
-        Tesseract.createWorker('eng').then(function (worker) {
-          if (timedOut) { worker.terminate(); return; }
-          return worker.setParameters({
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
-            tessedit_pageseg_mode: '6'
-          }).then(function () {
-            if (timedOut) { worker.terminate(); return null; }
-            return worker.recognize(self._canvasEl);
+        var tryWithAPI = function () {
+          if (typeof Tesseract.createWorker === 'function') {
+            logger('Using createWorker API');
+            Tesseract.createWorker('eng').then(function (worker) {
+              if (timedOut) { try { worker.terminate(); } catch(e) {} return; }
+              return worker.setParameters({
+                tessedit_pageseg_mode: '6'
+              }).then(function () {
+                if (timedOut) { try { worker.terminate(); } catch(e) {} return null; }
+                logger('Worker ready, recognizing...');
+                return worker.recognize(self._canvasEl);
+              }).then(function (result) {
+                if (timedOut) { try { worker.terminate(); } catch(e) {} return; }
+                clearTimeout(timeoutId);
+                try { worker.terminate(); } catch(e) {}
+                var text = result && result.data ? result.data.text : '';
+                logger('OCR result:', text ? text.replace(/\n/g, ' | ').substring(0, 200) : '(empty)');
+                self._handleResult(text, false);
+              }).catch(function (err) {
+                clearTimeout(timeoutId);
+                try { worker.terminate(); } catch(e) {}
+                logger('Tesseract worker error:', err);
+                if (!timedOut) {
+                  logger('Falling back to recognize() API');
+                  tryRecognizeAPI();
+                } else {
+                  self._handleResult(null, false);
+                }
+              });
+            }).catch(function (err) {
+              clearTimeout(timeoutId);
+              logger('Tesseract createWorker error:', err);
+              if (!timedOut) {
+                logger('Falling back to recognize() API');
+                tryRecognizeAPI();
+              } else {
+                self._handleResult(null, false);
+              }
+            });
+          } else {
+            tryRecognizeAPI();
+          }
+        };
+
+        var tryRecognizeAPI = function () {
+          if (timedOut) { self._handleResult(null, true); return; }
+          logger('Using recognize() API');
+          Tesseract.recognize(self._canvasEl, 'eng', {
+            logger: function (m) {
+              if (m.status === 'recognizing text') {
+                self.status = 'processing';
+              }
+            }
           }).then(function (result) {
-            if (timedOut) { worker.terminate(); return; }
+            if (timedOut) return;
             clearTimeout(timeoutId);
-            worker.terminate();
             var text = result && result.data ? result.data.text : '';
-            logger('OCR result:', text.replace(/\n/g, ' | '));
+            logger('OCR recognize result:', text ? text.replace(/\n/g, ' | ').substring(0, 200) : '(empty)');
             self._handleResult(text, false);
           }).catch(function (err) {
             clearTimeout(timeoutId);
-            worker.terminate();
-            logger('Tesseract error:', err);
+            logger('Tesseract recognize error:', err);
             self._handleResult(null, false);
           });
-        }).catch(function (err) {
-          clearTimeout(timeoutId);
-          logger('Tesseract init error:', err);
-          self._handleResult(null, false);
-        });
+        };
+
+        tryWithAPI();
       },
 
       _handleResult: function (text, timedOut) {
@@ -286,10 +327,11 @@ document.addEventListener('alpine:init', function () {
             setTimeout(function () { self.closeCamera(); }, 1200);
             return;
           }
-          this._fail(parsed
-            ? 'Confianza baja (' + Math.round(parsed.confidence * 100) + '%). Intente con mejor iluminación.'
-            : (timedOut ? 'Tiempo de espera agotado. Pruebe con una foto en lugar de la cámara.'
-                        : 'No se detectó MRZ válida. Asegúrese de que la franja de caracteres sea visible y esté bien iluminada.'));
+          this._fail(timedOut
+            ? 'Tiempo de espera agotado (60s). Pruebe con una foto más nítida, bien iluminada, con la zona de caracteres visible.'
+            : (parsed
+              ? 'Confianza baja (' + Math.round(parsed.confidence * 100) + '%). Intente con mejor iluminación.'
+              : 'No se detectó MRZ válida. Asegúrese de que la franja de caracteres sea visible y esté bien iluminada.'));
           return;
         }
 
