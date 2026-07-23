@@ -24,11 +24,17 @@ class ReservationController extends Controller
             });
         }
 
-        $sortable = ['code', 'guest_name', 'checkin_date', 'checkout_date', 'source', 'status', 'created_at'];
+        $sortable = ['code', 'guest_name', 'checkin_date', 'checkout_date', 'source', 'status', 'created_at', 'property_name'];
         $sort = in_array($request->sort, $sortable) ? $request->sort : 'checkin_date';
         $direction = in_array($request->direction, ['asc', 'desc']) ? $request->direction : 'asc';
 
-        $query->orderBy($sort, $direction);
+        if ($sort === 'property_name') {
+            $query->select('reservations.*')
+                  ->leftJoin('properties', 'reservations.property_id', '=', 'properties.id')
+                  ->orderBy('properties.name', $direction);
+        } else {
+            $query->orderBy($sort, $direction);
+        }
         $reservations = $query->paginate(20)->appends($request->only(['sort', 'direction', 'search', 'status', 'property_id']));
         $properties = Property::where('tenant_id', tenant_id())->get();
 

@@ -26,7 +26,7 @@
                 @php $th = fn($col, $label) => '<th class="p-3"><a href="' . e(request()->fullUrlWithQuery(['sort' => $col, 'direction' => $sort === $col && $direction === 'asc' ? 'desc' : 'asc'])) . '" class="hover:text-gray-800">' . $label . ($sort === $col ? ($direction === 'asc' ? ' ↑' : ' ↓') : '') . '</a></th>'; @endphp
                 {!! $th('code', 'Código') !!}
                 {!! $th('guest_name', 'Huésped') !!}
-                <th class="p-3">Alojamiento</th>
+                {!! $th('property_name', 'Alojamiento') !!}
                 {!! $th('checkin_date', 'Entrada') !!}
                 {!! $th('checkout_date', 'Salida') !!}
                 {!! $th('source', 'Origen') !!}
