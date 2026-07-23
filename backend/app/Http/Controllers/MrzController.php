@@ -14,6 +14,7 @@ class MrzController extends Controller
         ]);
 
         $text = $request->input('text');
+        $text = $this->_cleanMrzText($text);
 
         $result = MrzParser::tryParse($text);
 
@@ -57,6 +58,27 @@ class MrzController extends Controller
             'success' => true,
             'data' => $mapped,
         ]);
+    }
+
+    private function _cleanMrzText(string $text): string
+    {
+        $lines = explode("\n", $text);
+        $lines = array_map(function ($l) {
+            return preg_replace('/[^A-Z0-9<]/', '', strtoupper(trim($l)));
+        }, $lines);
+        $lines = array_values(array_filter($lines, function ($l) {
+            return strlen($l) >= 20;
+        }));
+
+        if (empty($lines)) return $text;
+
+        if (strlen($lines[0]) >= 3 &&
+            !in_array($lines[0][0], ['I', 'P', 'A', 'C', 'V']) &&
+            substr($lines[0], 1, 3) === 'ESP') {
+            $lines[0] = 'I' . $lines[0];
+        }
+
+        return implode("\n", array_slice($lines, 0, 3));
     }
 
     private function mapType(?string $type): string
