@@ -3,6 +3,9 @@
 @section('title', 'Check-in Online')
 
 @php $prop = $reservation->property ?? null; @endphp
+@php
+    $totalGuests = min($reservation->adults + $reservation->children, config('checkin.max_guests', 20));
+@endphp
 @section('property_logo', $prop?->logo_url ?? asset('images/logo_aldara.png'))
 @section('property_favicon', $prop?->logo_url ?? asset('images/logo_aldara.png'))
 @section('property_name', $prop?->name ?? config('app.name'))
@@ -24,62 +27,58 @@
         <p class="text-gray-400 text-sm mt-4">Código de reserva: {{ $reservation->code }}</p>
     </div>
 @else
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="step-indicator">
-            <div class="step step-active">1</div>
-            <div class="step step-pending">2</div>
-            <div class="step step-pending">3</div>
-        </div>
-
-        <h2 class="text-lg font-semibold mb-4">Datos de la reserva</h2>
-        <div class="bg-gray-50 rounded-lg p-4 mb-6">
-            <div class="grid grid-cols-2 gap-3 text-sm">
-                <div><span class="text-gray-500">Código:</span> <span class="font-medium">{{ $reservation->code }}</span></div>
-                <div><span class="text-gray-500">Huésped:</span> <span class="font-medium">{{ $reservation->guest_name }}</span></div>
-                <div><span class="text-gray-500">Entrada:</span> <span class="font-medium">{{ $reservation->checkin_date->format('d/m/Y') }}</span></div>
-                <div><span class="text-gray-500">Salida:</span> <span class="font-medium">{{ $reservation->checkout_date->format('d/m/Y') }}</span></div>
-                <div><span class="text-gray-500">Adultos:</span> <span class="font-medium">{{ $reservation->adults }}</span></div>
-                <div><span class="text-gray-500">Menores:</span> <span class="font-medium">{{ $reservation->children }}</span></div>
-            </div>
-        </div>
-
+    <div class="bg-white rounded-lg shadow p-6"
+         x-data="checkinWizard()"
+         x-init="init()">
         <form method="POST" action="{{ route('public.checkin.submit', $reservation->checkin_token) }}" class="space-y-6">
             @csrf
-            <div id="guests-container">
-                <div class="mb-6 p-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
+
+            <input type="hidden" name="total_guests" value="{{ $totalGuests }}">
+
+            <div class="text-center mb-4">
+                <span class="text-sm text-gray-500" x-text="currentGuest < totalGuests
+                    ? 'Huésped ' + (currentGuest + 1) + ' de ' + totalGuests
+                    : 'Finalizar'">
+                </span>
+            </div>
+
+            @for($i = 0; $i < $totalGuests; $i++)
+            <div x-show="currentGuest === {{ $i }}" x-cloak>
+                <h3 class="font-semibold mb-3">Huésped {{ $i + 1 }} de {{ $totalGuests }}</h3>
+
+                <div class="mb-4 p-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-sm font-semibold text-blue-700">Escanear DNI / Pasaporte</span>
                         <span class="text-xs text-blue-500">Los datos se rellenarán automáticamente</span>
                     </div>
                     <p class="text-xs text-blue-600 mb-3">Tus datos no salen de tu dispositivo. El escaneo se procesa localmente.</p>
-                    <x-document-scanner prefix="guests[0][" suffix="]" />
+                    <x-document-scanner prefix="guests[{{ $i }}][" suffix="]" />
                 </div>
 
-                <h3 class="font-semibold mb-3">Datos del viajero principal</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Nombre *</label>
-                        <input type="text" name="guests[0][first_name]" id="g-first_name" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700" for="g-first_name-{{ $i }}">Nombre *</label>
+                        <input type="text" name="guests[{{ $i }}][first_name]" id="g-first_name-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Apellidos *</label>
-                        <input type="text" name="guests[0][last_name]" id="g-last_name" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700" for="g-last_name-{{ $i }}">Apellidos *</label>
+                        <input type="text" name="guests[{{ $i }}][last_name]" id="g-last_name-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Tipo documento *</label>
-                        <select name="guests[0][document_type]" id="g-document_type" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700" for="g-document_type-{{ $i }}">Tipo documento *</label>
+                        <select name="guests[{{ $i }}][document_type]" id="g-document_type-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="dni">DNI</option>
                             <option value="nie">NIE</option>
                             <option value="passport">Pasaporte</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Nº documento *</label>
-                        <input type="text" name="guests[0][document_number]" id="g-document_number" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700" for="g-document_number-{{ $i }}">Nº documento *</label>
+                        <input type="text" name="guests[{{ $i }}][document_number]" id="g-document_number-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Nacionalidad *</label>
-                        <select name="guests[0][nationality]" id="g-nationality" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700" for="g-nationality-{{ $i }}">Nacionalidad *</label>
+                        <select name="guests[{{ $i }}][nationality]" id="g-nationality-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="ES">España</option>
                             <option value="FR">Francia</option>
                             <option value="GB">Reino Unido</option>
@@ -90,149 +89,195 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Fecha de nacimiento</label>
-                        <input type="date" name="guests[0][birth_date]" id="g-birth_date" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700" for="g-birth_date-{{ $i }}">Fecha de nacimiento</label>
+                        <input type="date" name="guests[{{ $i }}][birth_date]" id="g-birth_date-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" name="guests[0][email]" id="g-email" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700" for="g-email-{{ $i }}">Email</label>
+                        <input type="email" name="guests[{{ $i }}][email]" id="g-email-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Teléfono</label>
-                        <input type="tel" name="guests[0][phone]" id="g-phone" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700" for="g-phone-{{ $i }}">Teléfono</label>
+                        <input type="tel" name="guests[{{ $i }}][phone]" id="g-phone-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                 </div>
             </div>
+            @endfor
 
-            <div id="additional-guests" class="hidden">
-                <h3 class="font-semibold mb-3">Acompañantes</h3>
-                <div id="guests-list"></div>
-                <button type="button" onclick="addGuest()" class="text-sm text-blue-600 hover:text-blue-800">+ Añadir acompañante</button>
+            <div x-show="currentGuest === totalGuests" x-cloak>
+                <h3 class="font-semibold mb-3">Finalizar</h3>
+
+                @if(config('checkin.require_signature'))
+                <div class="mb-6">
+                    <h4 class="font-semibold mb-2">Firma digital</h4>
+                    <p class="text-sm text-gray-500 mb-2">Firme en el recuadro inferior</p>
+                    <canvas id="signature-pad" class="w-full border border-gray-300 rounded-lg" height="150"></canvas>
+                    <input type="hidden" name="signature_data" id="signature-data">
+                    <button type="button" onclick="clearSignature()" class="mt-1 text-sm text-gray-500 hover:text-gray-700">Limpiar firma</button>
+                </div>
+                @endif
+
+                <div class="space-y-3 bg-gray-50 rounded-lg p-4">
+                    <label class="flex items-start">
+                        <input type="checkbox" name="consent_legal" required class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="ml-2 text-sm text-gray-700">He leído y acepto las condiciones legales y la política de privacidad *</span>
+                    </label>
+                    <label class="flex items-start">
+                        <input type="checkbox" name="consent_marketing" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="ml-2 text-sm text-gray-700">Acepto recibir comunicaciones comerciales (opcional)</span>
+                    </label>
+                    <label class="flex items-start">
+                        <input type="checkbox" name="consent_data_retention" required class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="ml-2 text-sm text-gray-700">Consiento la conservación de mis datos según la política de retención *</span>
+                    </label>
+                </div>
             </div>
 
-            @if(config('checkin.require_signature'))
-            <div>
-                <h3 class="font-semibold mb-3">Firma digital</h3>
-                <p class="text-sm text-gray-500 mb-2">Firme en el recuadro inferior</p>
-                <canvas id="signature-pad" class="w-full border border-gray-300 rounded-lg" height="150"></canvas>
-                <input type="hidden" name="signature_data" id="signature-data">
-                <button type="button" onclick="clearSignature()" class="mt-1 text-sm text-gray-500 hover:text-gray-700">Limpiar firma</button>
-            </div>
-            @endif
+            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div x-show="currentGuest > 0">
+                    <button type="button" @click="prev()"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                        ← Anterior
+                    </button>
+                </div>
+                <div x-show="currentGuest === 0"></div>
 
-            <div class="space-y-3 bg-gray-50 rounded-lg p-4">
-                <label class="flex items-start">
-                    <input type="checkbox" name="consent_legal" required class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                    <span class="ml-2 text-sm text-gray-700">He leído y acepto las condiciones legales y la política de privacidad *</span>
-                </label>
-                <label class="flex items-start">
-                    <input type="checkbox" name="consent_marketing" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                    <span class="ml-2 text-sm text-gray-700">Acepto recibir comunicaciones comerciales (opcional)</span>
-                </label>
-                <label class="flex items-start">
-                    <input type="checkbox" name="consent_data_retention" required class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                    <span class="ml-2 text-sm text-gray-700">Consiento la conservación de mis datos según la política de retención *</span>
-                </label>
-            </div>
+                <div>
+                    <button type="button" @click="next()" x-show="currentGuest < totalGuests"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                        Siguiente →
+                    </button>
 
-            <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition">
-                Enviar check-in
-            </button>
+                    <button type="submit" x-show="currentGuest === totalGuests"
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                        Enviar check-in
+                    </button>
+                </div>
+            </div>
         </form>
     </div>
 @endif
 @endsection
 
 @push('head')
+<style>
+    [x-cloak] { display: none !important; }
+</style>
 <script src="{{ asset('js/mrz-parser.js') }}"></script>
 <script src="{{ asset('js/document-scanner.js') }}"></script>
 @endpush
 
 @push('scripts')
 <script>
-    let guestCount = 1;
+    document.addEventListener('alpine:init', function () {
+        Alpine.data('checkinWizard', function () {
+            return {
+                totalGuests: {{ $totalGuests }},
+                currentGuest: 0,
 
-    const maxGuests = {{ config('checkin.max_guests', 20) }};
-    const totalGuests = {{ $reservation->adults + $reservation->children }};
+                init() {
+                    if (this.totalGuests === 0) {
+                        this.currentGuest = 0;
+                    }
+                },
 
-    if (totalGuests > 1) {
-        document.getElementById('additional-guests').classList.remove('hidden');
-        for (let i = 1; i < Math.min(totalGuests, maxGuests); i++) {
-            addGuest();
+                next() {
+                    if (this.currentGuest < this.totalGuests) {
+                        this.currentGuest++;
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        if (this.currentGuest === this.totalGuests) {
+                            this.$nextTick(initSignature);
+                        }
+                    }
+                },
+
+                prev() {
+                    if (this.currentGuest > 0) {
+                        this.currentGuest--;
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                }
+            };
+        });
+    });
+
+    function initSignature() {
+        var canvas = document.getElementById('signature-pad');
+        if (!canvas || canvas._initialized) return;
+        canvas._initialized = true;
+
+        var ctx = canvas.getContext('2d');
+        var drawing = false;
+        var lastX = 0, lastY = 0;
+
+        function resize() {
+            var rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = 150;
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
         }
-    }
+        resize();
 
-    function addGuest() {
-        if (guestCount >= maxGuests) return;
-        const i = guestCount;
-        const html = `
-            <div class="guest-entry border rounded-lg p-4 mb-3 bg-white">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="guests[${i}][first_name]" placeholder="Nombre *" required class="block w-full rounded-lg border-gray-300 text-sm">
-                    <input type="text" name="guests[${i}][last_name]" placeholder="Apellidos *" required class="block w-full rounded-lg border-gray-300 text-sm">
-                    <select name="guests[${i}][document_type]" required class="block w-full rounded-lg border-gray-300 text-sm">
-                        <option value="dni">DNI</option><option value="nie">NIE</option><option value="passport">Pasaporte</option>
-                    </select>
-                    <input type="text" name="guests[${i}][document_number]" placeholder="Nº documento *" required class="block w-full rounded-lg border-gray-300 text-sm">
-                    <select name="guests[${i}][nationality]" class="block w-full rounded-lg border-gray-300 text-sm">
-                        <option value="ES">España</option><option value="FR">Francia</option><option value="GB">Reino Unido</option><option value="other">Otro</option>
-                    </select>
-                    <button type="button" onclick="this.closest('.guest-entry').remove()" class="text-red-500 text-sm">Eliminar</button>
-                </div>
-            </div>`;
-        document.getElementById('guests-list').insertAdjacentHTML('beforeend', html);
-        guestCount++;
-    }
-
-    @if(config('checkin.require_signature'))
-    const canvas = document.getElementById('signature-pad');
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-    let lastX, lastY;
-
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
-    canvas.addEventListener('touchstart', handleTouch);
-    canvas.addEventListener('touchmove', handleTouch);
-    canvas.addEventListener('touchend', stopDrawing);
-
-    function startDrawing(e) {
-        drawing = true;
-        [lastX, lastY] = [e.offsetX, e.offsetY];
-    }
-
-    function draw(e) {
-        if (!drawing) return;
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(e.offsetX, e.offsetY);
-        ctx.stroke();
-        [lastX, lastY] = [e.offsetX, e.offsetY];
-        document.getElementById('signature-data').value = canvas.toDataURL();
-    }
-
-    function handleTouch(e) {
-        e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        if (e.type === 'touchstart') { drawing = true; [lastX, lastY] = [x, y]; }
-        else if (e.type === 'touchmove' && drawing) {
-            ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
-            [lastX, lastY] = [x, y];
+        canvas.addEventListener('mousedown', function (e) {
+            drawing = true;
+            var rect = canvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+        });
+        canvas.addEventListener('mousemove', function (e) {
+            if (!drawing) return;
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            lastX = x;
+            lastY = y;
             document.getElementById('signature-data').value = canvas.toDataURL();
-        }
+        });
+        canvas.addEventListener('mouseup', function () { drawing = false; });
+        canvas.addEventListener('mouseleave', function () { drawing = false; });
+
+        canvas.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            var rect = canvas.getBoundingClientRect();
+            var touch = e.touches[0];
+            lastX = touch.clientX - rect.left;
+            lastY = touch.clientY - rect.top;
+            drawing = true;
+        });
+        canvas.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+            if (!drawing) return;
+            var rect = canvas.getBoundingClientRect();
+            var touch = e.touches[0];
+            var x = touch.clientX - rect.left;
+            var y = touch.clientY - rect.top;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            lastX = x;
+            lastY = y;
+            document.getElementById('signature-data').value = canvas.toDataURL();
+        });
+        canvas.addEventListener('touchend', function () { drawing = false; });
     }
 
-    function stopDrawing() { drawing = false; }
+    if (document.getElementById('signature-pad')) {
+        initSignature();
+    }
 
-    function clearSignature() {
+    window.clearSignature = function () {
+        var canvas = document.getElementById('signature-pad');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         document.getElementById('signature-data').value = '';
-    }
-    @endif
+    };
 </script>
 @endpush
