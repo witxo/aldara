@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard;
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
@@ -181,15 +182,35 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ElevatedButton.icon(
-                    onPressed: _sending ? null : _sendCheckin,
-                    icon: _sending ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.send, size: 16),
-                    label: Text(l.translate('reservation.send_checkin')),
-                    style: ElevatedButton.styleFrom(fixedSize: const Size.fromHeight(44)),
-                  ),
+Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _sending ? null : () async {
+                        final api = context.read<AuthProvider>().api;
+                        try {
+                          final res = await api.post('/reservations/${_r!['id']}/send-checkin');
+                          final url = res['data']?['url'] as String?;
+                          if (url != null && mounted) {
+                            await Clipboard.setData(ClipboardData(text: url));
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enlace copiado'), backgroundColor: AppColors.success));
+                          }
+                        } catch (e) {
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                        }
+                      },
+                      icon: const Icon(Icons.copy, size: 16),
+                      label: const Text('Copiar enlace'),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: _sending ? null : _sendCheckin,
+                      icon: _sending ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.send, size: 16),
+                      label: const Text('Enviar por email'),
+                      style: ElevatedButton.styleFrom(fixedSize: const Size.fromHeight(44)),
+                    ),
+                  ],
                 ),
               ],
             ),
