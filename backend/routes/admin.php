@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\DatabaseExplorerController;
 
 Route::middleware(['auth', 'superadmin'])->prefix('/admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
@@ -14,4 +15,10 @@ Route::middleware(['auth', 'superadmin'])->prefix('/admin')->name('admin.')->gro
     Route::post('/tenants/{tenant}/plan', [AdminController::class, 'changePlan'])->name('tenants.plan');
 
     Route::get('/users', [AdminController::class, 'users'])->name('users');
+
+    Route::get('/database', [DatabaseExplorerController::class, 'index'])->name('database');
+    Route::get('/database/{table}', [DatabaseExplorerController::class, 'show'])->name('database.table');
+    Route::get('/database/{table}/{id}/edit', [DatabaseExplorerController::class, 'edit'])->name('database.edit');
+    Route::put('/database/{table}/{id}', [DatabaseExplorerController::class, 'update'])->name('database.update');
+    Route::delete('/database/{table}/{id}', [DatabaseExplorerController::class, 'destroy'])->name('database.destroy');
 });
