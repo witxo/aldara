@@ -222,12 +222,13 @@ class IdParser {
 
     // Name from line3: SURNAME<<FIRST_NAME<<...
     if (line3.isNotEmpty) {
-      final nameParts = line3.split('<<');
-      if (nameParts.isNotEmpty) {
-        lastName = nameParts[0].replaceAll('<', ' ').trim();
+      final parts = line3.split('<<');
+      if (parts.isNotEmpty) {
+        lastName = parts[0].replaceAll('<', ' ').trim();
       }
-      if (nameParts.length > 1) {
-        firstName = nameParts[1].replaceAll('<', ' ').trim();
+      if (parts.length > 1) {
+        // Join all remaining parts with space (handles multi-word first names)
+        firstName = parts.sublist(1).join(' ').replaceAll('<', ' ').trim();
       }
     }
 
@@ -269,11 +270,10 @@ class IdParser {
     // Name from firstLine: P<ESP<SURNAME<<FIRST_NAME<<...
     final afterPrefix = firstLine.replaceFirst(RegExp(r'P<[A-Z]{3}<'), '');
     final names = afterPrefix.split('<<');
-    if (names.isNotEmpty) {
-      lastName = names[0].replaceAll('<', ' ').trim();
-    }
+    lastName = names.isNotEmpty ? names[0].replaceAll('<', ' ').trim() : '';
     if (names.length > 1) {
-      firstName = names[1].replaceAll('<', ' ').trim();
+      // Join all remaining parts with space (handles multi-word first names)
+      firstName = names.sublist(1).join(' ').replaceAll('<', ' ').trim();
     }
 
     // Document number from secondLine (positions 0-8)
