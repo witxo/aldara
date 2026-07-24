@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domains\Property\Models\Property;
 use App\Domains\Reservation\Models\Reservation;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PublicCheckinByCodeController extends Controller
@@ -16,9 +17,21 @@ class PublicCheckinByCodeController extends Controller
             return view('public.checkin-by-code', ['error' => 'Código de alojamiento no válido.']);
         }
 
+        $checkinDate = $this->parseDate($checkin);
+        $checkoutDate = $this->parseDate($checkout);
+
+        if (!$checkinDate || !$checkoutDate) {
+            return view('public.checkin-by-code', [
+                'error' => 'No pudimos interpretar las fechas. Asegúrate de que las fechas en el enlace son correctas.',
+                'property' => $property,
+                'checkin' => $checkin,
+                'checkout' => $checkout,
+            ]);
+        }
+
         $reservations = Reservation::where('property_id', $property->id)
-            ->where('checkin_date', $checkin)
-            ->where('checkout_date', $checkout)
+            ->where('checkin_date', $checkinDate->toDateString())
+            ->where('checkout_date', $checkoutDate->toDateString())
             ->whereNotIn('status', ['cancelled'])
             ->with('mainGuest')
             ->get();
@@ -49,5 +62,60 @@ class PublicCheckinByCodeController extends Controller
         }
 
         return redirect()->route('public.checkin.show', ['token' => $reservation->checkin_token]);
+    }
+
+    private function parseDate(string $raw): ?Carbon
+    {
+        $cleaned = urldecode($raw);
+        $cleaned = trim($cleaned);
+
+        $dayNames = [
+            'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+            'lunes', 'martes', 'miércoles', 'miercoles', 'jueves', 'viernes', 'sábado', 'sabado', 'domingo',
+        ];
+
+        $cleaned = str_ireplace($dayNames, '', $cleaned);
+        $cleaned = preg_replace('/[,.]/', ' ', $cleaned);
+        $cleaned = preg_replace('/\b(de|del|el|la|los|las|of|the)\b/i', ' ', $cleaned);
+        $cleaned = preg_replace('/\s+/', ' ', $cleaned);
+        $cleaned = trim($cleaned);
+
+        $spanishMonths = [
+            'enero' => 'january',
+            'febrero' => 'february',
+            'marzo' => 'march',
+            'abril' => 'april',
+            'mayo' => 'may',
+            'junio' => 'june',
+            'julio' => 'july',
+            'agosto' => 'august',
+            'septiembre' => 'september',
+            'setiembre' => 'september',
+            'octubre' => 'october',
+            'noviembre' => 'november',
+            'diciembre' => 'december',
+        ];
+
+        $cleaned = str_ireplace(array_keys($spanishMonths), array_values($spanishMonths), $cleaned);
+
+        $formats = [
+            'Y-m-d', 'd/m/Y', 'd-m-Y', 'Y/m/d',
+            'j F Y', 'j F, Y', 'F j Y', 'F j, Y',
+            'd F Y', 'd F, Y',
+        ];
+
+        foreach ($formats as $format) {
+            try {
+                $date = Carbon::createFromFormat($format, $cleaned);
+                if ($date) return $date->startOfDay();
+            } catch (\Exception $e) {}
+        }
+
+        try {
+            $date = Carbon::parse($cleaned);
+            if ($date) return $date->startOfDay();
+        } catch (\Exception $e) {}
+
+        return null;
     }
 }
