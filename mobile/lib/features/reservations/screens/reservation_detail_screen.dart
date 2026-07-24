@@ -54,9 +54,13 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
     setState(() => _sending = true);
     try {
       final api = context.read<AuthProvider>().api;
-      await api.post('/reservations/${_r!['id']}/send-checkin');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Check-in enviado'), backgroundColor: AppColors.success));
+      final res = await api.post('/reservations/${_r!['id']}/send-checkin');
+      final url = res['data']?['url'] as String?;
+      if (url != null) {
+        await Clipboard.setData(ClipboardData(text: url));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enlace enviado por email y copiado al portapapeles'), backgroundColor: AppColors.success));
+        }
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
