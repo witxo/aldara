@@ -14,6 +14,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         \App\Events\CheckinCompleted::class => [
             \App\Listeners\ProcessCheckinCompleted::class,
+            \App\Listeners\SendAdminCheckinNotification::class,
         ],
         \App\Events\CheckinVerified::class => [
             \App\Listeners\PrepareSesSubmission::class,
