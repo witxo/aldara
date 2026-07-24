@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BelongsToTenant;
 use App\Traits\HasUuid;
 use App\Traits\Auditable;
+use Illuminate\Support\Str;
 
 class Property extends Model
 {
@@ -15,6 +16,7 @@ class Property extends Model
     protected $fillable = [
         'tenant_id',
         'uuid',
+        'checkin_code',
         'name',
         'type',
         'address_line1',
@@ -65,5 +67,16 @@ class Property extends Model
     public function integrations()
     {
         return $this->hasMany(\App\Domains\Integration\Models\PropertyIntegration::class);
+    }
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($property) {
+            if (empty($property->checkin_code)) {
+                $property->checkin_code = Str::random(32);
+            }
+        });
     }
 }

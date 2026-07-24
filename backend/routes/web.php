@@ -71,6 +71,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::prefix('/checkin')->name('public.checkin.')->group(function () {
+    Route::get('/{propertyCode}/{checkin}/{checkout}', [\App\Http\Controllers\PublicCheckinByCodeController::class, 'lookup'])->name('lookup');
     Route::get('/{token}', [\App\Http\Controllers\PublicCheckinController::class, 'show'])->name('show');
     Route::post('/{token}', [\App\Http\Controllers\PublicCheckinController::class, 'submit'])->name('submit');
 });
