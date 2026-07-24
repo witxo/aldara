@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
@@ -13,6 +15,9 @@ class IdScannerResult {
   final String? lastName;
   final String? birthDate;
   final String? nationality;
+  final String? gender;
+  final String? expiryDate;
+  final double confidence;
 
   IdScannerResult({
     required this.documentType,
@@ -21,6 +26,9 @@ class IdScannerResult {
     this.lastName,
     this.birthDate,
     this.nationality,
+    this.gender,
+    this.expiryDate,
+    this.confidence = 0.0,
   });
 }
 
@@ -37,9 +45,15 @@ class _IdScannerScreenState extends State<IdScannerScreen>
   final TextRecognizer _textRecognizer =
       TextRecognizer(script: TextRecognitionScript.latin);
   final ImagePicker _imagePicker = ImagePicker();
+  final int _maxCaptures = 10;
+  final double _confidenceThreshold = 0.55;
+
   bool _isProcessing = false;
   bool _cameraReady = false;
   String? _statusMessage;
+  int _captureCount = 0;
+  double _bestConfidence = 0.0;
+  IdScannerResult? _bestResult;
 
   @override
   void initState() {
@@ -98,15 +112,40 @@ class _IdScannerScreenState extends State<IdScannerScreen>
       final result = await _analyzeImage(InputImage.fromFilePath(picture.path));
 
       if (result != null && mounted) {
-        Navigator.pop(context, result);
-        return;
+        setState(() {
+          _captureCount++;
+          if (result.confidence > _bestConfidence) {
+            _bestConfidence = result.confidence;
+            _bestResult = result;
+          }
+        });
+
+        if (result.confidence >= _confidenceThreshold) {
+          setState(() => _statusMessage =
+              'Documento detectado: ${result.documentType.toUpperCase()} (${(result.confidence * 100).toStringAsFixed(0)}%)');
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            Navigator.pop(context, result);
+            return;
+          }
+        }
       }
     } catch (_) {}
 
     _isProcessing = false;
 
     if (mounted) {
-      _startContinuousScan();
+      if (_captureCount >= _maxCaptures) {
+        if (_bestResult != null) {
+          Navigator.pop(context, _bestResult);
+        } else {
+          setState(() {
+            _statusMessage = 'No se pudo leer el documento. Intenta de nuevo.';
+          });
+        }
+      } else {
+        _startContinuousScan();
+      }
     }
   }
 
@@ -119,7 +158,8 @@ class _IdScannerScreenState extends State<IdScannerScreen>
     final parsed = IdParser.parse(text);
     if (parsed == null || parsed.documentNumber.isEmpty) return null;
 
-    setState(() => _statusMessage = 'Documento detectado: ${parsed.documentType.toUpperCase()}');
+    setState(() => _statusMessage =
+        'Documento: ${parsed.documentType.toUpperCase()} (${(parsed.confidence * 100).toStringAsFixed(0)}%)');
 
     return IdScannerResult(
       documentType: parsed.documentType,
@@ -128,6 +168,9 @@ class _IdScannerScreenState extends State<IdScannerScreen>
       lastName: parsed.lastName,
       birthDate: parsed.birthDate,
       nationality: parsed.nationality,
+      gender: parsed.gender,
+      expiryDate: parsed.expiryDate,
+      confidence: parsed.confidence,
     );
   }
 
@@ -199,7 +242,6 @@ class _IdScannerScreenState extends State<IdScannerScreen>
 
     return Stack(
       children: [
-        // Camera preview
         if (_cameraController != null && _cameraController!.value.isInitialized)
           SizedBox(
             width: double.infinity,
@@ -214,10 +256,8 @@ class _IdScannerScreenState extends State<IdScannerScreen>
             ),
           ),
 
-        // Overlay guide
         const ScannerOverlay(),
 
-        // Bottom status bar
         Positioned(
           left: 16,
           right: 16,
