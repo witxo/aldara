@@ -71,7 +71,7 @@
                         <span class="text-sm font-semibold text-blue-700">Escanear DNI / Pasaporte</span>
                         <span class="text-xs text-blue-500">Los datos se rellenarán automáticamente</span>
                     </div>
-                    <p class="text-xs text-blue-600 mb-3">Tus datos no salen de tu dispositivo. El escaneo se procesa localmente.</p>
+                    <p class="text-xs text-blue-600 mb-3">Escanea la parte trasera del DNI o la página del pasaporte donde está la zona de lectura mecánica (MRZ). Tus datos no salen de tu dispositivo.</p>
                     <x-document-scanner prefix="guests[{{ $i }}][" suffix="]" />
                 </div>
 
