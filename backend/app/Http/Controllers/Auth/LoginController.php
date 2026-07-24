@@ -27,7 +27,7 @@ class LoginController extends Controller
             $tenants = $user->activeTenants;
 
             if ($user->is_superadmin) {
-                return redirect('/admin/dashboard');
+                return redirect('/admin');
             }
 
             if ($tenants->count() === 1) {
