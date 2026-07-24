@@ -3,9 +3,9 @@
 @section('title', 'Check-in Online')
 
 @php $prop = $reservation->property ?? null; @endphp
-@php
-    $totalGuests = min($reservation->adults + $reservation->children, config('checkin.max_guests', 20));
-@endphp
+@php $maxGuests = config('checkin.max_guests', 20); @endphp
+@php $resInitialAdults = (int) $reservation->adults; @endphp
+@php $resInitialChildren = (int) $reservation->children; @endphp
 @section('property_logo', $prop?->logo_url ?? asset('images/logo_aldara.png'))
 @section('property_favicon', $prop?->logo_url ?? asset('images/logo_aldara.png'))
 @section('property_name', $prop?->name ?? config('app.name'))
@@ -33,7 +33,27 @@
         <form method="POST" action="{{ route('public.checkin.submit', $reservation->checkin_token) }}" class="space-y-6">
             @csrf
 
-            <input type="hidden" name="total_guests" value="{{ $totalGuests }}">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
+                <h3 class="font-semibold text-blue-800 mb-1">Reserva: {{ $reservation->code }}</h3>
+                <p class="text-sm text-blue-600 mb-3">{{ $reservation->property->name ?? '' }} | {{ $reservation->checkin->format('d/m/Y') }} → {{ $reservation->checkout->format('d/m/Y') }}</p>
+                <div class="flex flex-wrap gap-4">
+                    <div class="bg-white rounded-lg px-4 py-2 flex items-center gap-3 border border-blue-100">
+                        <span class="text-sm text-gray-600">Adultos</span>
+                        <button type="button" @click="if(currentGuest === 0 && editableAdults > 1) editableAdults--" :disabled="currentGuest !== 0" class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center font-bold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-lg leading-none pb-0.5">−</button>
+                        <span class="font-bold text-lg w-5 text-center" x-text="editableAdults"></span>
+                        <button type="button" @click="if(currentGuest === 0 && editableAdults + editableChildren < maxGuests) editableAdults++" :disabled="currentGuest !== 0" class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center font-bold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-lg leading-none">+</button>
+                    </div>
+                    <div class="bg-white rounded-lg px-4 py-2 flex items-center gap-3 border border-blue-100">
+                        <span class="text-sm text-gray-600">Niños</span>
+                        <button type="button" @click="if(currentGuest === 0 && editableChildren > 0) editableChildren--" :disabled="currentGuest !== 0" class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center font-bold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-lg leading-none pb-0.5">−</button>
+                        <span class="font-bold text-lg w-5 text-center" x-text="editableChildren"></span>
+                        <button type="button" @click="if(currentGuest === 0 && editableAdults + editableChildren < maxGuests) editableChildren++" :disabled="currentGuest !== 0" class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center font-bold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-lg leading-none">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" name="adults" :value="editableAdults">
+            <input type="hidden" name="children" :value="editableChildren">
 
             <div class="text-center mb-4">
                 <span class="text-sm text-gray-500" x-text="currentGuest < totalGuests
@@ -42,9 +62,9 @@
                 </span>
             </div>
 
-            @for($i = 0; $i < $totalGuests; $i++)
+            @for($i = 0; $i < $maxGuests; $i++)
             <div x-show="currentGuest === {{ $i }}" x-cloak>
-                <h3 class="font-semibold mb-3">Huésped {{ $i + 1 }} de {{ $totalGuests }}</h3>
+                <h3 class="font-semibold mb-3">Huésped {{ $i + 1 }} de <span x-text="totalGuests"></span></h3>
 
                 <div class="mb-4 p-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
                     <div class="flex items-center justify-between mb-2">
@@ -172,13 +192,13 @@
     document.addEventListener('alpine:init', function () {
         Alpine.data('checkinWizard', function () {
             return {
-                totalGuests: {{ $totalGuests }},
+                editableAdults: {{ $resInitialAdults }},
+                editableChildren: {{ $resInitialChildren }},
+                maxGuests: {{ $maxGuests }},
                 currentGuest: 0,
 
-                init() {
-                    if (this.totalGuests === 0) {
-                        this.currentGuest = 0;
-                    }
+                get totalGuests() {
+                    return this.editableAdults + this.editableChildren;
                 },
 
                 next() {

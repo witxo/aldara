@@ -29,7 +29,16 @@ class PublicCheckinController extends Controller
             return back()->with('error', 'El enlace ha expirado.');
         }
 
+        $adults = max(1, (int) $request->input('adults', $reservation->adults));
+        $children = max(0, (int) $request->input('children', $reservation->children));
+        $expectedGuests = $adults + $children;
+
+        $guests = array_slice((array) $request->input('guests', []), 0, $expectedGuests);
+        $request->merge(['guests' => $guests]);
+
         $validated = $request->validate([
+            'adults' => 'integer|min:1',
+            'children' => 'integer|min:0',
             'guests' => 'required|array|min:1',
             'guests.*.first_name' => 'required|string|max:100',
             'guests.*.last_name' => 'required|string|max:100',
@@ -43,6 +52,13 @@ class PublicCheckinController extends Controller
             'consent_legal' => 'accepted',
             'consent_data_retention' => 'accepted',
         ]);
+
+        if ($adults !== (int) $reservation->adults || $children !== (int) $reservation->children) {
+            $reservation->updateQuietly([
+                'adults' => $adults,
+                'children' => $children,
+            ]);
+        }
 
         $checkin = Checkin::firstOrCreate(
             ['reservation_id' => $reservation->id, 'type' => 'online'],
