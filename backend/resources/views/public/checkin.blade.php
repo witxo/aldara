@@ -127,6 +127,18 @@
                         <label class="block text-sm font-medium text-gray-700" for="g-phone-{{ $i }}">Teléfono</label>
                         <input type="tel" name="guests[{{ $i }}][phone]" id="g-phone-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700" for="g-address-{{ $i }}">Dirección</label>
+                        <input type="text" name="guests[{{ $i }}][address_line1]" id="g-address-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="g-city-{{ $i }}">Ciudad</label>
+                        <input type="text" name="guests[{{ $i }}][address_city]" id="g-city-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="g-zip-{{ $i }}">Código postal</label>
+                        <input type="text" name="guests[{{ $i }}][address_postal_code]" id="g-zip-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
                 </div>
             </div>
             @endfor
