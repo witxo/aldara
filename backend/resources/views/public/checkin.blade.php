@@ -84,8 +84,12 @@
                         <input type="text" name="guests[{{ $i }}][first_name]" id="g-first_name-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700" for="g-last_name-{{ $i }}">Apellidos *</label>
+                        <label class="block text-sm font-medium text-gray-700" for="g-last_name-{{ $i }}">Primer apellido *</label>
                         <input type="text" name="guests[{{ $i }}][last_name]" id="g-last_name-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div x-show="docTypes[{{ $i }}] === 'dni' || docTypes[{{ $i }}] === 'nie'">
+                        <label class="block text-sm font-medium text-gray-700" for="g-last_name2-{{ $i }}">Segundo apellido</label>
+                        <input type="text" name="guests[{{ $i }}][last_name2]" id="g-last_name2-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700" for="g-document_type-{{ $i }}">Tipo documento *</label>

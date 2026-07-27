@@ -19,6 +19,7 @@ class Guest extends Model
         'uuid',
         'first_name',
         'last_name',
+        'last_name2',
         'document_type',
         'document_number',
         'document_support',

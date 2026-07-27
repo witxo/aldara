@@ -43,6 +43,7 @@ class PublicCheckinController extends Controller
             'guests' => 'required|array|min:1',
             'guests.*.first_name' => 'required|string|max:100',
             'guests.*.last_name' => 'required|string|max:100',
+            'guests.*.last_name2' => 'nullable|string|max:100',
             'guests.*.document_type' => 'required|in:dni,nie,passport,other',
             'guests.*.document_number' => 'required|string|max:50',
             'guests.*.document_support' => 'nullable|string|max:20',

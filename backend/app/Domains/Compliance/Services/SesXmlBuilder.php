@@ -139,7 +139,7 @@ class SesXmlBuilder
         return [
             'nombre' => $guest->first_name,
             'apellido1' => $guest->last_name,
-            'apellido2' => '',
+            'apellido2' => $guest->last_name2 ?? '',
             'tipo_documento' => $this->mapDocumentType($guest->document_type),
             'numero_documento' => $guest->document_number,
             'soporte_documento' => $guest->document_support ?? '',

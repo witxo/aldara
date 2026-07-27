@@ -245,14 +245,32 @@ document.addEventListener('alpine:init', function () {
           documentNumber = optData1.replace(/</g, '');
         }
 
-        var givenNames = parsed['Given Names'] || '';
         var surname = parsed.Surname || '';
+        var givenNames = parsed['Given Names'] || '';
+        var surname2 = '';
+
+        if (docType === 'dni' || docType === 'nie') {
+          // DNI/NIE: givenNames may contain second surname at the end
+          var tokens = givenNames.replace(/\s+/g, ' ').trim().split(' ');
+          if (tokens.length >= 2) {
+            surname2 = tokens.pop();
+            givenNames = tokens.join(' ');
+          }
+        } else {
+          // Passport: surname field may contain both surnames
+          var parts = surname.replace(/\s+/g, ' ').trim().split(' ');
+          if (parts.length >= 2) {
+            surname = parts[0];
+            surname2 = parts.slice(1).join(' ');
+          }
+        }
 
         return {
           documentType: docType,
           documentNumber: documentNumber,
           supportNumber: supportNumber,
           surname: surname,
+          surname2: surname2,
           givenNames: givenNames,
           birthDate: birthDate,
           nationality: parsed.Nationality || '',
@@ -300,19 +318,9 @@ document.addEventListener('alpine:init', function () {
         };
 
         var fields = {};
-        var firstName = record.givenNames || '';
-        var lastName = record.surname || '';
-        if (record.documentType === 'dni' && record.givenNames) {
-          var tokens = record.givenNames.replace(/\s+/g, ' ').trim().split(' ');
-          if (tokens.length >= 2) {
-            firstName = tokens.pop();
-            lastName = (record.surname + ' ' + tokens.join(' ')).trim();
-          } else {
-            firstName = record.givenNames;
-          }
-        }
-        if (firstName) fields['first_name'] = firstName;
-        if (lastName) fields['last_name'] = lastName;
+        if (record.givenNames) fields['first_name'] = record.givenNames;
+        if (record.surname) fields['last_name'] = record.surname;
+        if (record.surname2) fields['last_name2'] = record.surname2;
         if (record.documentNumber) fields['document_number'] = record.documentNumber;
         if (record.supportNumber) fields['document_support'] = record.supportNumber;
         if (record.birthDate) fields['birth_date'] = record.birthDate;
