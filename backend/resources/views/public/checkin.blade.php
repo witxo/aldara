@@ -35,7 +35,7 @@
 
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
                 <h3 class="font-semibold text-blue-800 mb-1">Reserva: {{ $reservation->code }}</h3>
-                <p class="text-sm text-blue-600 mb-3">{{ $reservation->property->name ?? '' }} | {{ $reservation->checkin?->format('d/m/Y') ?? '' }} → {{ $reservation->checkout?->format('d/m/Y') ?? '' }}</p>
+                <p class="text-sm text-blue-600 mb-3">{{ $reservation->property->name ?? '' }} | {{ $reservation->checkin_date?->format('d/m/Y') ?? '' }} → {{ $reservation->checkout_date?->format('d/m/Y') ?? '' }}</p>
                 <div class="flex flex-wrap gap-4">
                     <div class="bg-white rounded-lg px-4 py-2 flex items-center gap-3 border border-blue-100">
                         <span class="text-sm text-gray-600">Adultos</span>
