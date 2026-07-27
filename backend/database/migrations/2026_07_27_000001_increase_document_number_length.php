@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('guests', function (Blueprint $table) {
-            $table->text('document_number')->change();
+            $table->string('document_number', 500)->change();
         });
     }
 
