@@ -187,11 +187,14 @@ document.addEventListener('alpine:init', function () {
           logger('OCR completed');
           var text = result && result.data ? result.data.text : '';
           logger('OCR text:', text ? text.replace(/\n/g, ' | ').substring(0, 200) : '(empty)');
-          var parsed = text ? MRZReader.parseMrz(text) : null;
-          if (parsed && typeof parsed === 'object') {
-            self._handleParsed(parsed);
+          var cleanText = text ? text.replace(/[^A-Z0-9<]/g, '') : '';
+          logger('Cleaned MRZ:', cleanText ? cleanText.substring(0, 90) : '(empty)');
+          var extracted = cleanText ? MRZReader.extractMRZData(cleanText) : null;
+          if (extracted && extracted.parsed && typeof extracted.parsed === 'object') {
+            self._handleParsed(extracted.parsed);
           } else {
-            self._fail('No se detectó MRZ válida en la imagen');
+            var errMsg = typeof extracted?.parsed === 'string' ? extracted.parsed : 'No se detectó MRZ válida en la imagen';
+            self._fail(errMsg);
           }
         }).catch(function (err) {
           if (timedOut) return;
