@@ -62,6 +62,11 @@
             @else
             <p class="text-sm text-gray-500">Check-in {{ $checkin->status === 'verified' ? 'verificado' : 'rechazado' }}</p>
             @endif
+            <hr class="my-4">
+            <form method="POST" action="{{ route('checkins.destroy', $checkin) }}" onsubmit="return confirm('¿Eliminar este check-in? Se borrarán todos los documentos asociados.')">
+                @csrf @method('DELETE')
+                <button type="submit" class="w-full bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm hover:bg-red-200">Eliminar check-in</button>
+            </form>
         </div>
     </div>
 </div>

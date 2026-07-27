@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Checkin;
 use App\Http\Controllers\Controller;
 use App\Domains\Checkin\Models\Checkin;
 use App\Events\CheckinVerified;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CheckinController extends Controller
 {
@@ -42,5 +44,21 @@ class CheckinController extends Controller
         }
 
         return redirect()->back()->with('success', 'Check-in ' . ($request->action === 'verify' ? 'verificado' : 'rechazado'));
+    }
+
+    public function destroy(Request $request, Checkin $checkin)
+    {
+        $this->authorize('delete', $checkin);
+
+        foreach ($checkin->guestDocuments as $doc) {
+            Storage::disk($doc->disk)->delete($doc->path);
+            $doc->forceDelete();
+        }
+
+        $checkin->sesSubmissions()->delete();
+        $checkin->delete();
+
+        return redirect()->route('checkins.index')
+            ->with('success', 'Check-in eliminado');
     }
 }

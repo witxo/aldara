@@ -28,4 +28,11 @@ class CheckinPolicy
         $role = $user->getRoleForTenant($checkin->tenant_id);
         return $role === 'admin';
     }
+
+    public function delete(User $user, Checkin $checkin): bool
+    {
+        if ($user->is_superadmin) return true;
+        $role = $user->getRoleForTenant($checkin->tenant_id);
+        return $role === 'admin';
+    }
 }

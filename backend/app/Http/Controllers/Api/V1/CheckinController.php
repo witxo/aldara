@@ -8,6 +8,7 @@ use App\Domains\Reservation\Models\Reservation;
 use App\Events\CheckinCompleted;
 use App\Events\CheckinVerified;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CheckinController extends Controller
 {
@@ -171,6 +172,25 @@ class CheckinController extends Controller
         return response()->json([
             'data' => $checkin->fresh(),
             'message' => $checkin->status === 'verified' ? 'Check-in verificado' : 'Check-in rechazado',
+            'status' => 200,
+        ]);
+    }
+
+    public function destroy(Request $request, Checkin $checkin)
+    {
+        $this->authorize('delete', $checkin);
+
+        foreach ($checkin->guestDocuments as $doc) {
+            Storage::disk($doc->disk)->delete($doc->path);
+            $doc->forceDelete();
+        }
+
+        $checkin->sesSubmissions()->delete();
+        $checkin->delete();
+
+        return response()->json([
+            'data' => null,
+            'message' => 'Check-in eliminado',
             'status' => 200,
         ]);
     }

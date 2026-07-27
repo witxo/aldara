@@ -69,7 +69,13 @@
                     <p class="font-medium">{{ $checkin->type }} — {{ $checkin->status }}</p>
                     <p class="text-sm text-gray-500">{{ $checkin->completed_at?->format('d/m/Y H:i') ?? 'Pendiente' }}</p>
                 </div>
-                <a href="{{ route('checkins.show', $checkin) }}" class="text-blue-600 text-sm">Ver</a>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('checkins.show', $checkin) }}" class="text-blue-600 text-sm">Ver</a>
+                    <form method="POST" action="{{ route('checkins.destroy', $checkin) }}" onsubmit="return confirm('¿Eliminar este check-in? Se borrarán todos los documentos asociados.')" class="inline">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="text-red-600 text-sm hover:underline">Eliminar</button>
+                    </form>
+                </div>
             </div>
             @empty
             <p class="text-gray-500 text-sm">Sin check-ins</p>

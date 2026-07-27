@@ -40,6 +40,13 @@
             <p class="text-gray-500 text-sm">Sin reserva asignada</p>
             @endif
         </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <form method="POST" action="{{ route('guests.destroy', $guest) }}" onsubmit="return confirm('¿Eliminar este huésped?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="w-full bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm hover:bg-red-200">Eliminar huésped</button>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

@@ -44,6 +44,7 @@ Route::name('api.v1.')->group(function () {
             Route::get('/checkins/{checkin}', [CheckinController::class, 'show'])->name('checkins.show');
             Route::put('/checkins/{checkin}', [CheckinController::class, 'update'])->name('checkins.update');
             Route::post('/checkins/{checkin}/verify', [CheckinController::class, 'verify'])->name('checkins.verify');
+            Route::delete('/checkins/{checkin}', [CheckinController::class, 'destroy'])->name('checkins.destroy');
 
             Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations.index');
             Route::post('/integrations/{property}/connect', [IntegrationController::class, 'connect'])->name('integrations.connect');

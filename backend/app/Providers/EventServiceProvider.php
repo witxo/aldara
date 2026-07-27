@@ -16,9 +16,9 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\ProcessCheckinCompleted::class,
             \App\Listeners\SendAdminCheckinNotification::class,
         ],
-        \App\Events\CheckinVerified::class => [
-            \App\Listeners\PrepareSesSubmission::class,
-        ],
+        // CheckinVerified::class => [
+        //     \App\Listeners\PrepareSesSubmission::class,
+        // ], // SES manual-only
         \App\Events\ReservationCreated::class => [
             \App\Listeners\GenerateCheckinToken::class,
         ],

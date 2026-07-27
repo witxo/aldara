@@ -36,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [\App\Http\Controllers\Checkin\CheckinController::class, 'index'])->name('index');
             Route::get('/{checkin}', [\App\Http\Controllers\Checkin\CheckinController::class, 'show'])->name('show');
             Route::post('/{checkin}/verify', [\App\Http\Controllers\Checkin\CheckinController::class, 'verify'])->name('verify')->middleware('can:verify,checkin');
+            Route::delete('/{checkin}', [\App\Http\Controllers\Checkin\CheckinController::class, 'destroy'])->name('destroy')->middleware('can:delete,checkin');
         });
 
         Route::get('/integrations', [\App\Http\Controllers\Integration\IntegrationController::class, 'index'])->name('integrations.index');
