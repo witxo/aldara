@@ -177,7 +177,7 @@ document.addEventListener('alpine:init', function () {
         }, 60000);
 
         var worker = null;
-        window.Tesseract.createWorker('eng', 1, {
+        window.Tesseract.createWorker('mrz', 1, {
           workerPath: '/tesseract/worker.min.js',
           corePath: '/tesseract/',
           langPath: '/model/'
@@ -206,7 +206,7 @@ document.addEventListener('alpine:init', function () {
           clearTimeout(timeoutId);
           try { if (worker) worker.terminate(); } catch(e) {}
           if (!timedOut) {
-            self._fail('Error al procesar la imagen');
+            self._fail('Error al procesar la imagen: ' + (err?.message || err));
           }
         });
       },
