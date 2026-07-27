@@ -45,6 +45,11 @@ class Checkin extends Model
         return $this->belongsTo(\App\Models\User::class, 'verified_by');
     }
 
+    public function guests()
+    {
+        return $this->hasMany(\App\Domains\Guest\Models\Guest::class);
+    }
+
     public function guestDocuments()
     {
         return $this->hasMany(\App\Domains\Guest\Models\GuestDocument::class);

@@ -109,6 +109,7 @@ class PublicCheckinController extends Controller
             if ($matched) {
                 $matched->update($guestData);
             } else {
+                $guestData['checkin_id'] = $checkin->id;
                 Guest::create($guestData);
             }
         }

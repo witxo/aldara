@@ -106,7 +106,12 @@ class GuestController extends Controller
         $reservationId = $guest->reservation_id;
         $guest->delete();
 
-        return redirect()->route('reservations.show', $reservationId)
+        if ($reservationId && \App\Domains\Reservation\Models\Reservation::where('id', $reservationId)->exists()) {
+            return redirect()->route('reservations.show', $reservationId)
+                ->with('success', 'Huésped eliminado');
+        }
+
+        return redirect()->route('reservations.index')
             ->with('success', 'Huésped eliminado');
     }
 }

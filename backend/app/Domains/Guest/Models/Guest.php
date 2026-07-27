@@ -15,6 +15,7 @@ class Guest extends Model
     protected $fillable = [
         'tenant_id',
         'reservation_id',
+        'checkin_id',
         'uuid',
         'first_name',
         'last_name',
@@ -48,6 +49,11 @@ class Guest extends Model
     public function reservation()
     {
         return $this->belongsTo(\App\Domains\Reservation\Models\Reservation::class);
+    }
+
+    public function checkin()
+    {
+        return $this->belongsTo(\App\Domains\Checkin\Models\Checkin::class);
     }
 
     public function documents()

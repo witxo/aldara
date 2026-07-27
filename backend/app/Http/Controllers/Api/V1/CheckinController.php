@@ -80,6 +80,7 @@ class CheckinController extends Controller
             foreach ($validated['guests'] as $guestData) {
                 $guestData['tenant_id'] = tenant_id();
                 $guestData['reservation_id'] = $reservation->id;
+                $guestData['checkin_id'] = $checkin->id;
                 $reservation->guests()->create($guestData);
             }
         }
@@ -186,6 +187,7 @@ class CheckinController extends Controller
         }
 
         $checkin->sesSubmissions()->delete();
+        $checkin->guests()->each->delete();
         $checkin->delete();
 
         return response()->json([

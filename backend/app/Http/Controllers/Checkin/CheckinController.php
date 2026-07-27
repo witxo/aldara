@@ -56,6 +56,7 @@ class CheckinController extends Controller
         }
 
         $checkin->sesSubmissions()->delete();
+        $checkin->guests()->each->delete();
         $checkin->delete();
 
         return redirect()->route('checkins.index')
