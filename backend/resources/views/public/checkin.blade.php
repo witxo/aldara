@@ -30,7 +30,7 @@
     <div class="bg-white rounded-lg shadow p-6"
          x-data="checkinWizard()"
          x-init="init()">
-        <form method="POST" action="{{ route('public.checkin.submit', $reservation->checkin_token) }}" class="space-y-6">
+        <form method="POST" action="{{ route('public.checkin.submit', $reservation->checkin_token) }}" class="space-y-6" novalidate>
             @csrf
 
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
