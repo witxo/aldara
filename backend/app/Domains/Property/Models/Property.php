@@ -56,7 +56,10 @@ class Property extends Model
 
     public function getLogoUrlAttribute(): ?string
     {
-        return $this->logo ? route('property.logo', $this) : null;
+        if (!$this->logo || !\Illuminate\Support\Facades\Route::has('property.logo')) {
+            return null;
+        }
+        return route('property.logo', $this);
     }
 
     public function reservations()

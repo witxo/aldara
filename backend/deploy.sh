@@ -14,7 +14,7 @@ git pull origin main
 
 echo "=== Syncing to web root ==="
 rsync -a --delete \
-  --exclude={'vendor/','node_modules/','.env','.git','storage/'} \
+  --exclude={'vendor/','node_modules/','.env','.git','storage/','bootstrap/cache/'} \
   "$REPO_DIR/backend/" "$WEB_DIR/"
 
 echo "=== Installing PHP dependencies ==="
