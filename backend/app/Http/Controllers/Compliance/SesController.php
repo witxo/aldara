@@ -51,6 +51,18 @@ class SesController extends Controller
         );
     }
 
+    public function retry(SesSubmission $submission)
+    {
+        $this->authorize('view', $submission);
+        $result = $this->sesService->retry($submission);
+
+        $successStatuses = ['sent', 'partially_sent'];
+        return redirect()->back()->with(
+            in_array($result->status, $successStatuses) ? 'success' : 'error',
+            $result->status === 'partially_sent' ? 'Envío parcial: algunos viajeros no se pudieron enviar' : ($result->status === 'sent' ? 'Envío realizado' : 'Error en el envío')
+        );
+    }
+
     public function export(Request $request)
     {
         $submissions = SesSubmission::where('tenant_id', tenant_id())

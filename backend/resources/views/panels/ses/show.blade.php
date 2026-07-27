@@ -22,6 +22,11 @@
                 <div><span class="text-gray-500">Intentos:</span> {{ $submission->retry_count ?? 0 }}</div>
                 <div><span class="text-gray-500">ID externo:</span> {{ $submission->reference ?? '—' }}</div>
             </div>
+            @if(in_array($submission->status, ['failed', 'draft', 'rejected']) && $submission->error_message)
+            <div class="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded text-sm text-red-700">
+                <strong>Error:</strong> {{ $submission->error_message }}
+            </div>
+            @endif
             @if($submission->payload)
             <div class="mt-4">
                 <h5 class="text-sm font-medium text-gray-700 mb-2">Payload</h5>
@@ -40,12 +45,19 @@
     <div class="space-y-6">
         <div class="bg-white rounded-lg shadow p-6">
             <h4 class="font-semibold mb-4">Acciones</h4>
-            @if(in_array($submission->status, ['ready', 'failed', 'partially_sent']))
+            @if(in_array($submission->status, ['ready', 'partially_sent']))
             <form method="POST" action="{{ route('ses.send', $submission) }}">
                 @csrf
                 <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Enviar ahora</button>
             </form>
-            @elseif($submission->status === 'sent')
+            @endif
+            @if(in_array($submission->status, ['failed', 'draft']))
+            <form method="POST" action="{{ route('ses.retry', $submission) }}">
+                @csrf
+                <button type="submit" class="w-full bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm">Reintentar envío</button>
+            </form>
+            @endif
+            @if($submission->status === 'sent')
             <p class="text-sm text-gray-500">Esperando confirmación</p>
             @endif
         </div>

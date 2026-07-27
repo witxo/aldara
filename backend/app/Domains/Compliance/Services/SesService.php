@@ -91,7 +91,7 @@ class SesService
 
     public function retry(SesSubmission $submission): SesSubmission
     {
-        if ($submission->status !== 'failed') {
+        if (!in_array($submission->status, ['failed', 'draft'])) {
             return $submission;
         }
 

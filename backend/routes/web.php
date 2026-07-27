@@ -51,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{submission}', [\App\Http\Controllers\Compliance\SesController::class, 'show'])->name('show');
             Route::post('/prepare/{reservation}', [\App\Http\Controllers\Compliance\SesController::class, 'prepare'])->name('prepare');
             Route::post('/{submission}/send', [\App\Http\Controllers\Compliance\SesController::class, 'send'])->name('send');
+            Route::post('/{submission}/retry', [\App\Http\Controllers\Compliance\SesController::class, 'retry'])->name('retry');
             Route::get('/export', [\App\Http\Controllers\Compliance\SesController::class, 'export'])->name('export');
         });
 
