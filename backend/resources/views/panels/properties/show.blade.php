@@ -32,6 +32,7 @@
                     <code class="text-sm bg-gray-100 px-2 py-0.5 rounded">{{ $property->checkin_code }}</code>
                     <button onclick="navigator.clipboard.writeText('{{ config('app.url') }}/checkin/{{ $property->checkin_code }}/[CHECKIN]/[CHECKOUT]')" class="text-xs text-blue-600 hover:text-blue-800 ml-1">Copiar URL</button>
                     <p class="text-xs text-gray-400 mt-1">Reemplaza [CHECKIN] y [CHECKOUT] por las fechas (YYYY-MM-DD). Ej: <code class="text-gray-500">{{ config('app.url') }}/checkin/{{ $property->checkin_code }}/2026-08-15/2026-08-20</code></p>
+                    <p class="text-xs text-gray-400 mt-1">URL genérica (sin fechas): <code class="text-gray-500">{{ config('app.url') }}/checkin/{{ $property->checkin_code }}</code> <button onclick="navigator.clipboard.writeText('{{ config('app.url') }}/checkin/{{ $property->checkin_code }}')" class="text-xs text-blue-600 hover:text-blue-800 ml-1">Copiar</button></p>
                 </div>
             </div>
         </div>

@@ -9,6 +9,64 @@ use Illuminate\Http\Request;
 
 class PublicCheckinByCodeController extends Controller
 {
+    public function searchForm(string $code)
+    {
+        $property = Property::where('checkin_code', $code)->first();
+
+        if (!$property) {
+            return view('public.checkin-search', ['error' => 'Código de alojamiento no válido.']);
+        }
+
+        return view('public.checkin-search', compact('property'));
+    }
+
+    public function search(Request $request, string $code)
+    {
+        $property = Property::where('checkin_code', $code)->first();
+
+        if (!$property) {
+            return view('public.checkin-search', ['error' => 'Código de alojamiento no válido.']);
+        }
+
+        $validated = $request->validate([
+            'checkin' => 'required|date',
+            'checkout' => 'required|date|after:checkin',
+        ], [
+            'checkin.required' => 'Introduce la fecha de entrada.',
+            'checkin.date' => 'La fecha de entrada no es válida.',
+            'checkout.required' => 'Introduce la fecha de salida.',
+            'checkout.date' => 'La fecha de salida no es válida.',
+            'checkout.after' => 'La fecha de salida debe ser posterior a la de entrada.',
+        ]);
+
+        $reservations = Reservation::where('property_id', $property->id)
+            ->where('checkin_date', $validated['checkin'])
+            ->where('checkout_date', $validated['checkout'])
+            ->whereNotIn('status', ['cancelled'])
+            ->with('mainGuest')
+            ->get();
+
+        if ($reservations->isEmpty()) {
+            return back()->withInput()->withErrors(['not_found' => 'No encontramos ninguna reserva con esas fechas en ' . $property->name . '. Verifica los datos e inténtalo de nuevo.']);
+        }
+
+        if ($reservations->count() > 1) {
+            return view('public.checkin-search', [
+                'multiple' => true,
+                'reservations' => $reservations,
+                'property' => $property,
+            ]);
+        }
+
+        $reservation = $reservations->first();
+
+        if (!$reservation->checkin_token) {
+            $reservation->generateCheckinToken();
+        }
+
+        return redirect()->route('public.checkin.show', ['token' => $reservation->checkin_token]);
+    }
+
     public function lookup(string $code, string $checkin, string $checkout)
     {
         $property = Property::where('checkin_code', $code)->first();

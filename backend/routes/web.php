@@ -71,9 +71,16 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::prefix('/checkin')->name('public.checkin.')->group(function () {
-    Route::get('/{propertyCode}/{checkin}/{checkout}', [\App\Http\Controllers\PublicCheckinByCodeController::class, 'lookup'])->name('lookup');
-    Route::get('/{token}', [\App\Http\Controllers\PublicCheckinController::class, 'show'])->name('show');
-    Route::post('/{token}', [\App\Http\Controllers\PublicCheckinController::class, 'submit'])->name('submit');
+    Route::get('/{propertyCode}', [\App\Http\Controllers\PublicCheckinByCodeController::class, 'searchForm'])->name('search')
+        ->where('propertyCode', '[A-Za-z0-9]{32}');
+    Route::post('/{propertyCode}', [\App\Http\Controllers\PublicCheckinByCodeController::class, 'search'])->name('search.submit')
+        ->where('propertyCode', '[A-Za-z0-9]{32}');
+    Route::get('/{propertyCode}/{checkin}/{checkout}', [\App\Http\Controllers\PublicCheckinByCodeController::class, 'lookup'])->name('lookup')
+        ->where('propertyCode', '[A-Za-z0-9]{32}');
+    Route::get('/{token}', [\App\Http\Controllers\PublicCheckinController::class, 'show'])->name('show')
+        ->where('token', '[A-Za-z0-9]{40}');
+    Route::post('/{token}', [\App\Http\Controllers\PublicCheckinController::class, 'submit'])->name('submit')
+        ->where('token', '[A-Za-z0-9]{40}');
 });
 
 Route::get('/property-logo/{property}', [\App\Http\Controllers\Property\PropertyController::class, 'logo'])->name('property.logo');
