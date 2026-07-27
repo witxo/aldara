@@ -170,32 +170,23 @@ document.addEventListener('alpine:init', function () {
           self._fail('Tesseract no disponible');
           return;
         }
+        logger('Starting OCR with Tesseract.recognize()...');
         var timedOut = false;
         var timeoutId = setTimeout(function () {
           timedOut = true;
-          self._fail('Tiempo de espera agotado');
-        }, 60000);
+          self._fail('Tiempo de espera agotado (30s). Pruebe con una foto más nítida.');
+        }, 30000);
 
-        var worker = null;
-        window.Tesseract.createWorker('mrz', 1, {
+        window.Tesseract.recognize(canvas, 'mrz', {
           workerPath: '/tesseract/worker.min.js',
           corePath: '/tesseract/',
           langPath: '/model/'
-        }).then(function (w) {
-          worker = w;
-          if (timedOut) { try { worker.terminate(); } catch(e) {} return; }
-          return worker.setParameters({
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
-            tessedit_pageseg_mode: '6'
-          });
-        }).then(function () {
-          if (timedOut || !worker) return null;
-          return worker.recognize(canvas);
         }).then(function (result) {
           if (timedOut) return;
           clearTimeout(timeoutId);
-          try { if (worker) worker.terminate(); } catch(e) {}
+          logger('OCR completed');
           var text = result && result.data ? result.data.text : '';
+          logger('OCR text:', text ? text.replace(/\n/g, ' | ').substring(0, 200) : '(empty)');
           var parsed = text ? MRZReader.parseMrz(text) : null;
           if (parsed && typeof parsed === 'object') {
             self._handleParsed(parsed);
@@ -203,11 +194,10 @@ document.addEventListener('alpine:init', function () {
             self._fail('No se detectó MRZ válida en la imagen');
           }
         }).catch(function (err) {
+          if (timedOut) return;
           clearTimeout(timeoutId);
-          try { if (worker) worker.terminate(); } catch(e) {}
-          if (!timedOut) {
-            self._fail('Error al procesar la imagen: ' + (err?.message || err));
-          }
+          logger('OCR error:', err);
+          self._fail('Error al procesar la imagen: ' + (err?.message || err));
         });
       },
 

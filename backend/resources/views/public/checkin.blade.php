@@ -28,8 +28,7 @@
     </div>
 @else
     <div class="bg-white rounded-lg shadow p-6"
-         x-data="checkinWizard()"
-         x-init="init()">
+          x-data="checkinWizard()">
         <form method="POST" action="{{ route('public.checkin.submit', $reservation->checkin_token) }}" class="space-y-6" novalidate>
             @csrf
 
