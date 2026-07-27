@@ -93,6 +93,13 @@
                         <p class="text-xs text-gray-400 mt-0.5">Código asignado por el Ministerio del Interior</p>
                     </div>
                 </div>
+                <div class="mt-4">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" name="ses_enabled" value="1" {{ old('ses_enabled', $property->ses_enabled ?? false) ? 'checked' : '' }} class="rounded border-gray-300">
+                        <span class="text-sm">SES habilitado</span>
+                    </label>
+                    <p class="text-xs text-gray-400 mt-0.5">Activar envío de partes de viajeros al MIR para este alojamiento</p>
+                </div>
             </div>
 
             @if(isset($property))

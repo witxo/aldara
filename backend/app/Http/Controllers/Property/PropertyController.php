@@ -37,6 +37,7 @@ class PropertyController extends Controller
             'ses_username' => 'nullable|string|max:255',
             'ses_password' => 'nullable|string|max:255',
             'ses_codigo_arrendador' => 'nullable|string|max:10',
+            'ses_enabled' => 'sometimes|boolean',
             'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
@@ -77,6 +78,7 @@ class PropertyController extends Controller
             'ses_username' => 'nullable|string|max:255',
             'ses_password' => 'nullable|string|max:255',
             'ses_codigo_arrendador' => 'nullable|string|max:10',
+            'ses_enabled' => 'sometimes|boolean',
             'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'remove_logo' => 'nullable|boolean',
         ]);

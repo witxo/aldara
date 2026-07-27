@@ -45,15 +45,15 @@ class SesService
             return $submission;
         }
 
-        if (!config('ses.enabled')) {
+        $property = $submission->reservation?->property;
+
+        if (!$property || !$property->ses_enabled) {
             $submission->update([
                 'status' => 'draft',
-                'error_message' => 'Modo SES deshabilitado',
+                'error_message' => 'SES no habilitado para este alojamiento',
             ]);
             return $submission;
         }
-
-        $property = $submission->reservation?->property;
 
         try {
             $response = $this->sendSoapRequest($submission->payload, $property);

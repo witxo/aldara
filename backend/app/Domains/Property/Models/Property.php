@@ -33,6 +33,7 @@ class Property extends Model
         'ses_username',
         'ses_password',
         'ses_codigo_arrendador',
+        'ses_enabled',
         'capacity',
         'checkin_time',
         'checkout_time',
@@ -46,6 +47,7 @@ class Property extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'ses_enabled' => 'boolean',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
         'checkin_time' => 'datetime:H:i',
