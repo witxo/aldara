@@ -14,7 +14,7 @@ class SesXmlBuilder
         $dom = new DOMDocument('1.0', 'UTF-8');
         $dom->formatOutput = true;
 
-        $peticion = $dom->createElementNS('http://www.neg.hospedajes.mir.es/altaParteHospedaje', 'alt:peticion');
+        $peticion = $dom->createElementNS('http://www.neg.hospedajes.mir.es/altaParteHospedaje', 'ns2:peticion');
         $dom->appendChild($peticion);
 
         $solicitud = $dom->createElement('solicitud');
@@ -23,6 +23,8 @@ class SesXmlBuilder
         $property = $reservation->property;
         $codEst = $dom->createElement('codigoEstablecimiento', $property->ses_establecimiento_code ?? '');
         $solicitud->appendChild($codEst);
+
+        $tz = $reservation->created_at->format('P');
 
         $guests = $guestsData
             ? $this->buildGuestsFromRequest($guestsData, $reservation)
@@ -36,21 +38,24 @@ class SesXmlBuilder
             $comunicacion->appendChild($contrato);
 
             $this->appendElement($contrato, 'referencia', $reservation->code ?? $reservation->uuid);
-            $this->appendElement($contrato, 'fechaContrato', $reservation->created_at->format('Y-m-d'));
-            $this->appendElement($contrato, 'fechaEntrada', $reservation->checkin_date->format('Y-m-d') . 'T' . ($reservation->checkin_time?->format('H:i:s') ?? '00:00:00'));
-            $this->appendElement($contrato, 'fechaSalida', $reservation->checkout_date->format('Y-m-d') . 'T' . ($reservation->checkout_time?->format('H:i:s') ?? '00:00:00'));
+            $this->appendElement($contrato, 'fechaContrato', $reservation->created_at->format('Y-m-d') . $tz);
+            $this->appendElement($contrato, 'fechaEntrada', $reservation->checkin_date->format('Y-m-d') . 'T' . ($reservation->checkin_time?->format('H:i:s') ?? '00:00:00') . '.000' . $tz);
+            $this->appendElement($contrato, 'fechaSalida', $reservation->checkout_date->format('Y-m-d') . 'T' . ($reservation->checkout_time?->format('H:i:s') ?? '00:00:00') . '.000' . $tz);
             $this->appendElement($contrato, 'numPersonas', (string) ($reservation->adults + $reservation->children));
 
             if ($reservation->adults + $reservation->children > 0) {
                 $this->appendElement($contrato, 'numHabitaciones', '1');
             }
 
-            $this->appendElement($contrato, 'internet', 'false');
+            $this->appendElement($contrato, 'internet', 'true');
 
             $pago = $dom->createElement('pago');
             $contrato->appendChild($pago);
             $this->appendElement($pago, 'tipoPago', 'OTRO');
-            $this->appendElement($pago, 'fechaPago', $reservation->created_at->format('Y-m-d'));
+            $this->appendElement($pago, 'fechaPago', $reservation->created_at->format('Y-m-d') . $tz);
+            $this->appendElement($pago, 'medioPago', '');
+            $this->appendElement($pago, 'titular', '');
+            $this->appendElement($pago, 'caducidadTarjeta', '');
 
             $persona = $dom->createElement('persona');
             $comunicacion->appendChild($persona);
@@ -73,7 +78,7 @@ class SesXmlBuilder
             }
 
             if (!empty($guestData['fecha_nacimiento'])) {
-                $this->appendElement($persona, 'fechaNacimiento', $guestData['fecha_nacimiento']);
+                $this->appendElement($persona, 'fechaNacimiento', $guestData['fecha_nacimiento'] . $tz);
             }
 
             if (!empty($guestData['nacionalidad'])) {
@@ -87,12 +92,17 @@ class SesXmlBuilder
             $direccion = $dom->createElement('direccion');
             $persona->appendChild($direccion);
             $this->appendElement($direccion, 'direccion', $guestData['direccion'] ?? '');
+            $this->appendElement($direccion, 'direccionComplementaria', '');
+            $this->appendElement($direccion, 'codigoMunicipio', '00000');
+            $this->appendElement($direccion, 'nombreMunicipio', '');
             $this->appendElement($direccion, 'codigoPostal', $guestData['codigo_postal'] ?? '28001');
             $this->appendElement($direccion, 'pais', $guestData['pais'] ?? 'ESP');
 
             if (!empty($guestData['telefono'])) {
                 $this->appendElement($persona, 'telefono', $guestData['telefono']);
             }
+
+            $this->appendElement($persona, 'telefono2', '');
 
             if (!empty($guestData['email'])) {
                 $this->appendElement($persona, 'correo', $guestData['email']);
@@ -169,10 +179,10 @@ class SesXmlBuilder
     protected function mapDocumentType(?string $type): string
     {
         return match (strtolower($type ?? '')) {
-            'dni', 'nif' => 'CP',
-            'nie' => 'TI',
-            'passport', 'pasaporte' => 'VI',
-            default => 'VI',
+            'dni', 'nif' => 'NIF',
+            'nie' => 'NIE',
+            'passport', 'pasaporte' => 'PAS',
+            default => 'OTRO',
         };
     }
 
