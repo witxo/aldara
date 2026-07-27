@@ -166,40 +166,31 @@ var MRZParser = {
     var l2 = this._cleanMrzLine(lines[1] || '');
     var l3 = this._cleanMrzLine(lines[2] || '');
 
-    l1 = l1.replace(/^[^I1P]/, 'I');
-
-    // If l2 ends with SKL noise from line boundary, strip it
-    var boundaryNoise = lines[1] ? (lines[1].match(/[SKL]$/) || [null])[0] : null;
-    if (boundaryNoise) {
-      l2 = l2.replace(/[SKL]+$/, '');
-    }
-    // If l3 starts with the SAME boundary noise char (duplicated at split point), strip one
-    if (boundaryNoise && l3.charAt(0) === boundaryNoise) {
-      l3 = l3.substring(1);
-    }
+    // Pad lines to ensure minimum length for position-based parsing
+    while (l1.length < 30) l1 += '<';
+    while (l2.length < 30) l2 += '<';
+    while (l3.length < 30) l3 += '<';
 
     var docType = l1.charAt(0);
-    var docType2 = l1.length > 1 ? l1.charAt(1) : '';
-    var country = l1.length > 4 ? l1.substring(2, 5) : '';
-    var docNumberRaw = l1.length > 13 ? l1.substring(5, 14) : '';
-    var docNumber = this._cleanDocNumber(docNumberRaw);
-    var docNumberCheck = l1.length > 14 ? l1.charAt(14) : '';
-    var finalCheck = l1.length > 29 ? l1.charAt(29) : '';
+    var docType2 = l1.charAt(1);
+    var issuer = l1.substring(2, 5);
+    var docNumberRaw = l1.substring(5, 14);
+    var docNumberCheck = l1.charAt(14);
+    var dniNumber = l1.substring(15, 24).replace(/</g, '');
+    var filler1 = l1.substring(24, 30);
 
-    var birthDateRaw = l2.length > 6 ? l2.substring(0, 6) : '';
-    var birthDateCheck = l2.length > 6 ? l2.charAt(6) : '';
-    var sex = l2.length > 7 ? l2.charAt(7) : '';
-    var expiryDateRaw = l2.length > 14 ? l2.substring(8, 14) : '';
-    var expiryDateCheck = l2.length > 14 ? l2.charAt(14) : '';
-    var nationality = l2.length > 18 ? l2.substring(15, 18) : '';
+    var birthDateRaw = l2.substring(0, 6);
+    var birthDateCheck = l2.charAt(6);
+    var sex = l2.charAt(7);
+    var expiryDateRaw = l2.substring(8, 14);
+    var expiryDateCheck = l2.charAt(14);
+    var nationality = l2.substring(15, 18);
+    var compositeCheck = l2.charAt(29);
 
-    var optionalField = l1.length > 24 ? l1.substring(15, 24) : '';
-    var supportNumber = docNumberRaw ? docNumberRaw.replace(/</g, '') : '';
-    var optDocNumber = optionalField ? this._cleanDocNumber(optionalField) : '';
-    var docNumberLetters = (docNumberRaw.match(/[A-Z]/g) || []).length;
-    if (docNumberLetters >= 3 && optDocNumber && optDocNumber.length >= 5) {
-      docNumber = optDocNumber;
-    }
+    // Pos 5-13 = support number (Spanish DNI) or document number (other ID cards)
+    // Pos 15-23 = NIF/NIE for Spanish DNI
+    var supportNumber = docNumberRaw.replace(/</g, '');
+    var documentNumber = dniNumber || supportNumber;
 
     var names = this._splitNames(l3);
     var surname = names.surname;
@@ -210,8 +201,8 @@ var MRZParser = {
     return {
       format: 'TD1',
       docType: mappedType,
-      country: country,
-      documentNumber: docNumber,
+      country: issuer,
+      documentNumber: documentNumber,
       supportNumber: supportNumber,
       surname: surname,
       givenNames: givenNames,
@@ -223,7 +214,7 @@ var MRZParser = {
         documentNumber: docNumberCheck,
         birthDate: birthDateCheck,
         expiryDate: expiryDateCheck,
-        final: finalCheck
+        final: compositeCheck
       },
       _docNumberRaw: docNumberRaw,
       _birthDateRaw: this._cleanDateField(birthDateRaw),
