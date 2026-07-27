@@ -249,20 +249,11 @@ document.addEventListener('alpine:init', function () {
         var givenNames = parsed['Given Names'] || '';
         var surname2 = '';
 
-        if (docType === 'dni' || docType === 'nie') {
-          // DNI/NIE: givenNames may contain second surname at the end
-          var tokens = givenNames.replace(/\s+/g, ' ').trim().split(' ');
-          if (tokens.length >= 2) {
-            surname2 = tokens.pop();
-            givenNames = tokens.join(' ');
-          }
-        } else {
-          // Passport: surname field may contain both surnames
-          var parts = surname.replace(/\s+/g, ' ').trim().split(' ');
-          if (parts.length >= 2) {
-            surname = parts[0];
-            surname2 = parts.slice(1).join(' ');
-          }
+        // Split surname field into apellido1 and apellido2 (parser puts both in Surname)
+        var parts = surname.replace(/\s+/g, ' ').trim().split(' ');
+        if (parts.length >= 2) {
+          surname = parts[0];
+          surname2 = parts.slice(1).join(' ');
         }
 
         return {
