@@ -2,10 +2,10 @@
 
 @section('title', 'Check-in Online')
 
-@php $prop = $reservation->property ?? null; @endphp
+@php $prop = isset($reservation) ? ($reservation->property ?? null) : null; @endphp
 @php $maxGuests = config('checkin.max_guests', 20); @endphp
-@php $resInitialAdults = (int) $reservation->adults; @endphp
-@php $resInitialChildren = (int) $reservation->children; @endphp
+@php $resInitialAdults = isset($reservation) ? (int) $reservation->adults : 1; @endphp
+@php $resInitialChildren = isset($reservation) ? (int) $reservation->children : 0; @endphp
 @section('property_logo', $prop?->logo_url ?? asset('images/logo_aldara.png'))
 @section('property_favicon', $prop?->logo_url ?? asset('images/logo_aldara.png'))
 @section('property_name', $prop?->name ?? config('app.name'))
