@@ -187,8 +187,8 @@
 <style>
     [x-cloak] { display: none !important; }
 </style>
-<script src="{{ asset('js/mrz-parser.js') }}"></script>
-<script src="{{ asset('js/document-scanner.js') }}"></script>
+<script src="{{ asset('js/mrz-parser.js') }}?v={{ filemtime(public_path('js/mrz-parser.js')) }}"></script>
+<script src="{{ asset('js/document-scanner.js') }}?v={{ filemtime(public_path('js/document-scanner.js')) }}"></script>
 @endpush
 
 @push('scripts')

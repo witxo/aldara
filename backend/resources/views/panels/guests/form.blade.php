@@ -3,8 +3,8 @@
 
 @push('head')
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="{{ asset('js/mrz-parser.js') }}"></script>
-<script src="{{ asset('js/document-scanner.js') }}"></script>
+<script src="{{ asset('js/mrz-parser.js') }}?v={{ filemtime(public_path('js/mrz-parser.js')) }}"></script>
+<script src="{{ asset('js/document-scanner.js') }}?v={{ filemtime(public_path('js/document-scanner.js')) }}"></script>
 @endpush
 
 @section('content')
