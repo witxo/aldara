@@ -134,7 +134,7 @@ class SesXmlBuilder
             'numero_documento' => $guest->document_number,
             'soporte_documento' => $guest->document_support ?? '',
             'fecha_nacimiento' => $guest->birth_date?->format('Y-m-d'),
-            'nacionalidad' => strtoupper($guest->nationality ?? 'OTRO'),
+            'nacionalidad' => $this->mapNationality($guest->nationality ?? ''),
             'sexo' => $this->mapGender($guest->gender),
             'direccion' => $guest->address_line1 ?? $guest->address ?? '',
             'codigo_postal' => $guest->address_postal_code ?? '28001',
@@ -155,7 +155,7 @@ class SesXmlBuilder
             'numero_documento' => $data['document_number'] ?? '',
             'soporte_documento' => $data['document_support'] ?? '',
             'fecha_nacimiento' => $data['birth_date'] ?? null,
-            'nacionalidad' => strtoupper($data['nationality'] ?? 'OTRO'),
+            'nacionalidad' => $this->mapNationality($data['nationality'] ?? ''),
             'sexo' => $this->mapGender($data['gender'] ?? ''),
             'direccion' => $data['address_line1'] ?? $data['address'] ?? '',
             'codigo_postal' => $data['address_postal_code'] ?? '28001',
@@ -183,6 +183,25 @@ class SesXmlBuilder
             'female', 'f', 'mujer' => 'M',
             default => '',
         };
+    }
+
+    protected function mapNationality(string $code): string
+    {
+        $map = [
+            'ES' => 'ESP', 'FR' => 'FRA', 'GB' => 'GBR', 'DE' => 'DEU',
+            'IT' => 'ITA', 'PT' => 'PRT', 'BE' => 'BEL', 'NL' => 'NLD',
+            'CH' => 'CHE', 'AT' => 'AUT', 'DK' => 'DNK', 'SE' => 'SWE',
+            'NO' => 'NOR', 'FI' => 'FIN', 'GR' => 'GRC', 'IE' => 'IRL',
+            'PL' => 'POL', 'CZ' => 'CZE', 'HU' => 'HUN', 'RO' => 'ROU',
+            'BG' => 'BGR', 'HR' => 'HRV', 'SK' => 'SVK', 'SI' => 'SVN',
+            'LT' => 'LTU', 'LV' => 'LVA', 'EE' => 'EST', 'US' => 'USA',
+            'CA' => 'CAN', 'MX' => 'MEX', 'BR' => 'BRA', 'AR' => 'ARG',
+            'CL' => 'CHL', 'CO' => 'COL', 'PE' => 'PER', 'JP' => 'JPN',
+            'CN' => 'CHN', 'IN' => 'IND', 'RU' => 'RUS', 'TR' => 'TUR',
+            'AU' => 'AUS', 'NZ' => 'NZL', 'MA' => 'MAR', 'DZ' => 'DZA',
+            'TN' => 'TUN', 'EG' => 'EGY', 'ZA' => 'ZAF',
+        ];
+        return $map[strtoupper($code)] ?? 'OTR';
     }
 
     protected function appendElement(DOMElement $parent, string $name, string $value = null): void

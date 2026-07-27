@@ -93,6 +93,21 @@
                 @csrf @method('DELETE')
                 <button type="submit" class="w-full bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm hover:bg-red-200">Eliminar check-in</button>
             </form>
+            @if($checkin->status === 'verified')
+            <hr class="my-4">
+            <h5 class="font-semibold text-sm mb-2">SES Hospedajes</h5>
+            <form method="POST" action="{{ route('ses.prepare', $checkin->reservation) }}">
+                @csrf
+                <button type="submit" class="w-full bg-green-100 text-green-700 px-4 py-2 rounded-lg text-sm hover:bg-green-200">Preparar envío SES</button>
+            </form>
+            @if($checkin->sesSubmissions->count() > 0)
+            <div class="mt-2 space-y-1">
+                @foreach($checkin->sesSubmissions as $sub)
+                <a href="{{ route('ses.show', $sub) }}" class="block text-xs text-blue-600 hover:underline">Envío #{{ $sub->id }} — {{ $sub->status }}</a>
+                @endforeach
+            </div>
+            @endif
+            @endif
         </div>
     </div>
 </div>
