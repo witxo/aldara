@@ -60,6 +60,19 @@
             @if($submission->status === 'sent')
             <p class="text-sm text-gray-500">Esperando confirmación</p>
             @endif
+            @if(in_array($submission->status, ['draft', 'failed', 'rejected']))
+            <hr class="my-4">
+            <form method="POST" action="{{ route('ses.destroy', $submission) }}">
+                @csrf @method('DELETE')
+                <button type="submit" class="w-full bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm hover:bg-red-200" onclick="return confirm('¿Eliminar este envío?')">Eliminar este envío</button>
+            </form>
+            <div class="mt-3">
+                <form method="POST" action="{{ route('ses.prepare', $submission->reservation) }}">
+                    @csrf
+                    <button type="submit" class="w-full bg-green-100 text-green-700 px-4 py-2 rounded-lg text-sm hover:bg-green-200">Preparar nuevo envío</button>
+                </form>
+            </div>
+            @endif
         </div>
 
         <div class="bg-white rounded-lg shadow p-6">

@@ -63,6 +63,14 @@ class SesController extends Controller
         );
     }
 
+    public function destroy(SesSubmission $submission)
+    {
+        $this->authorize('view', $submission);
+        $submission->delete();
+
+        return redirect()->route('ses.index')->with('success', 'Envío SES eliminado');
+    }
+
     public function export(Request $request)
     {
         $submissions = SesSubmission::where('tenant_id', tenant_id())

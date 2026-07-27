@@ -35,8 +35,14 @@
                     <td class="p-3">{{ $s->mode }}</td>
                     <td class="p-3">{{ $s->reference ?? '—' }}</td>
                     <td class="p-3">{{ $s->created_at->format('d/m/Y H:i') }}</td>
-                    <td class="p-3">
+                    <td class="p-3 flex items-center gap-2">
                         <a href="{{ route('ses.show', $s) }}" class="text-blue-600 text-xs hover:underline">Ver</a>
+                        @if(in_array($s->status, ['draft', 'failed']))
+                        <form method="POST" action="{{ route('ses.destroy', $s) }}" onsubmit="return confirm('¿Eliminar este envío?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="text-red-600 text-xs hover:underline">Eliminar</button>
+                        </form>
+                        @endif
                     </td>
                 </tr>
                 @empty
