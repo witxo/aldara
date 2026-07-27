@@ -63,7 +63,7 @@
             </div>
 
             @for($i = 0; $i < $maxGuests; $i++)
-            <div x-show="currentGuest === {{ $i }}" x-cloak>
+            <div x-show="currentGuest === {{ $i }} && {{ $i }} < totalGuests" x-cloak>
                 <h3 class="font-semibold mb-3">Huésped {{ $i + 1 }} de <span x-text="totalGuests"></span></h3>
 
                 <div class="mb-4 p-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
