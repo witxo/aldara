@@ -28,7 +28,8 @@
             <x-document-scanner />
         </div>
 
-        <form method="POST" action="{{ isset($guest) ? route('guests.update', $guest) : route('guests.store') }}">
+        <form method="POST" action="{{ isset($guest) ? route('guests.update', $guest) : route('guests.store') }}"
+              x-data="{ docType: '{{ old('document_type', $guest->document_type ?? 'dni') }}' }">
             @csrf
             @if(isset($guest)) @method('PUT') @endif
 
@@ -47,7 +48,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tipo documento *</label>
-                    <select name="document_type" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                    <select name="document_type" x-model="docType" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                         <option value="dni" {{ old('document_type', $guest->document_type ?? '') === 'dni' ? 'selected' : '' }}>DNI</option>
                         <option value="nie" {{ old('document_type', $guest->document_type ?? '') === 'nie' ? 'selected' : '' }}>NIE</option>
                         <option value="passport" {{ old('document_type', $guest->document_type ?? '') === 'passport' ? 'selected' : '' }}>Pasaporte</option>

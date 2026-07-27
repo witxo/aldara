@@ -86,7 +86,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700" for="g-document_type-{{ $i }}">Tipo documento *</label>
-                        <select name="guests[{{ $i }}][document_type]" id="g-document_type-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <select name="guests[{{ $i }}][document_type]" id="g-document_type-{{ $i }}" x-model="docTypes[{{ $i }}]" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="dni">DNI</option>
                             <option value="nie">NIE</option>
                             <option value="passport">Pasaporte</option>
@@ -96,7 +96,7 @@
                         <label class="block text-sm font-medium text-gray-700" for="g-document_number-{{ $i }}">Nº documento *</label>
                         <input type="text" name="guests[{{ $i }}][document_number]" id="g-document_number-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
-                    <div>
+                    <div x-show="docTypes[{{ $i }}] === 'dni'">
                         <label class="block text-sm font-medium text-gray-700" for="g-document_support-{{ $i }}">Nº soporte <span class="text-xs text-gray-400">(solo DNI español)</span></label>
                         <input type="text" name="guests[{{ $i }}][document_support]" id="g-document_support-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
@@ -200,6 +200,7 @@
                 editableChildren: {{ $resInitialChildren }},
                 maxGuests: {{ $maxGuests }},
                 currentGuest: 0,
+                docTypes: Array({{ $maxGuests }}).fill('dni'),
 
                 get totalGuests() {
                     return this.editableAdults + this.editableChildren;
