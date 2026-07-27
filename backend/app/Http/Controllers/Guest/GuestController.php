@@ -103,13 +103,7 @@ class GuestController extends Controller
     public function destroy(Guest $guest)
     {
         $this->authorize('delete', $guest);
-        $reservationId = $guest->reservation_id;
         $guest->delete();
-
-        if ($reservationId && \App\Domains\Reservation\Models\Reservation::where('id', $reservationId)->exists()) {
-            return redirect()->route('reservations.show', $reservationId)
-                ->with('success', 'Huésped eliminado');
-        }
 
         return redirect()->route('reservations.index')
             ->with('success', 'Huésped eliminado');
