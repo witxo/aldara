@@ -92,7 +92,7 @@ document.addEventListener('alpine:init', function () {
               langPath: '/model/',
               onResult: function (result) {
                 if (result && result.parsed && typeof result.parsed === 'object') {
-                  self._handleParsed(result.parsed);
+                  self._handleParsed(result.parsed, result.raw || '');
                 } else {
                   var msg = typeof result?.parsed === 'string' ? result.parsed : 'No se pudo leer el documento';
                   self._fail(msg);
@@ -191,7 +191,7 @@ document.addEventListener('alpine:init', function () {
           logger('Cleaned MRZ:', cleanText ? cleanText.substring(0, 90) : '(empty)');
           var extracted = cleanText ? MRZReader.extractMRZData(cleanText) : null;
           if (extracted && extracted.parsed && typeof extracted.parsed === 'object') {
-            self._handleParsed(extracted.parsed);
+            self._handleParsed(extracted.parsed, cleanText);
           } else {
             var errMsg = typeof extracted?.parsed === 'string' ? extracted.parsed : 'No se detectó MRZ válida en la imagen';
             self._fail(errMsg);
@@ -204,9 +204,10 @@ document.addEventListener('alpine:init', function () {
         });
       },
 
-      _handleParsed: function (parsed) {
+      _handleParsed: function (parsed, raw) {
         logger('Parsed:', parsed);
-        var record = this._mapToRecord(parsed);
+        logger('Raw MRZ:', raw);
+        var record = this._mapToRecord(parsed, raw);
         this.lastResult = record;
         this._populateForm(record);
         this.status = 'success';
@@ -214,7 +215,34 @@ document.addEventListener('alpine:init', function () {
         setTimeout(function () { self.closeScanner(); }, 1200);
       },
 
-      _mapToRecord: function (parsed) {
+      _parseSurnameFromRaw: function (raw) {
+        if (!raw) return { surname: '', surname2: '' };
+
+        var surnameField = '';
+        if (raw.length >= 80) {
+          // TD1 (3×30): line 3 at chars 60-89
+          var line3 = raw.substring(60, 90);
+          var sepPos = line3.indexOf('<<');
+          if (sepPos > 0) surnameField = line3.substring(0, sepPos);
+        } else if (raw.length >= 44) {
+          // TD3 (2×44): line 1 at chars 0-43, surname field after first '<<' up to '<<<'
+          var line1 = raw.substring(0, 44);
+          var start = line1.indexOf('<<');
+          if (start >= 0) {
+            start += 2;
+            var end = line1.indexOf('<<<', start);
+            if (end > start) surnameField = line1.substring(start, end);
+            else surnameField = line1.substring(start);
+          }
+        }
+
+        var parts = surnameField ? surnameField.split('<') : [];
+        var surname = parts[0] || '';
+        var surname2 = parts.slice(1).join('');
+        return { surname: surname, surname2: surname2 };
+      },
+
+      _mapToRecord: function (parsed, raw) {
         var docType = '';
         var dt = parsed['Document Type'] || '';
         if (dt) {
@@ -245,16 +273,10 @@ document.addEventListener('alpine:init', function () {
           documentNumber = optData1.replace(/</g, '');
         }
 
-        var surname = parsed.Surname || '';
+        var parsedNames = this._parseSurnameFromRaw(raw);
+        var surname = parsedNames.surname || parsed.Surname || '';
+        var surname2 = parsedNames.surname2 || '';
         var givenNames = parsed['Given Names'] || '';
-        var surname2 = '';
-
-        // Split surname field into apellido1 and apellido2 (parser puts both in Surname)
-        var parts = surname.replace(/\s+/g, ' ').trim().split(' ');
-        if (parts.length >= 2) {
-          surname = parts[0];
-          surname2 = parts.slice(1).join(' ');
-        }
 
         return {
           documentType: docType,
