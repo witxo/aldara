@@ -29,6 +29,11 @@
                     <input type="checkbox" name="checkin_require_document" value="1" {{ old('checkin_require_document', $settings['require_document'] ?? false) ? 'checked' : '' }} class="rounded border-gray-300">
                     <label class="text-sm">Requerir documento en check-in</label>
                 </div>
+                <div class="flex items-center gap-2">
+                    <input type="hidden" name="use_web_mrz_reader" value="0">
+                    <input type="checkbox" name="use_web_mrz_reader" value="1" {{ old('use_web_mrz_reader', $settings['use_web_mrz_reader'] ?? false) ? 'checked' : '' }} class="rounded border-gray-300">
+                    <label class="text-sm">Usar nuevo lector MRZ (web-mrz-reader)</label>
+                </div>
                 
             </div>
             <div class="mt-6 flex justify-end gap-3">

@@ -26,7 +26,8 @@ class GuestController extends Controller
         if ($reservationId) {
             $reservation = Reservation::where('tenant_id', tenant_id())->findOrFail($reservationId);
         }
-        return view('panels.guests.form', compact('reservation'));
+        $settings = current_tenant()?->settings ?? [];
+        return view('panels.guests.form', compact('reservation', 'settings'));
     }
 
     public function store(Request $request)
@@ -69,7 +70,8 @@ class GuestController extends Controller
     public function edit(Guest $guest)
     {
         $this->authorize('update', $guest);
-        return view('panels.guests.form', compact('guest'));
+        $settings = current_tenant()?->settings ?? [];
+        return view('panels.guests.form', compact('guest', 'settings'));
     }
 
     public function update(Request $request, Guest $guest)

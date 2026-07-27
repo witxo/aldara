@@ -72,7 +72,11 @@
                         <span class="text-xs text-blue-500">Los datos se rellenarán automáticamente</span>
                     </div>
                     <p class="text-xs text-blue-600 mb-3">Escanea la parte trasera del DNI o la página del pasaporte donde está la zona de lectura mecánica (MRZ). Tus datos no salen de tu dispositivo.</p>
-                    <x-document-scanner prefix="guests[{{ $i }}][" suffix="]" />
+                    @if($settings['use_web_mrz_reader'] ?? false)
+                        <x-document-scanner-webmrz prefix="guests[{{ $i }}][" suffix="]" />
+                    @else
+                        <x-document-scanner prefix="guests[{{ $i }}][" suffix="]" />
+                    @endif
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -189,6 +193,7 @@
 </style>
 <script src="{{ asset('js/mrz-parser.js') }}?v={{ filemtime(public_path('js/mrz-parser.js')) }}"></script>
 <script src="{{ asset('js/document-scanner.js') }}?v={{ filemtime(public_path('js/document-scanner.js')) }}"></script>
+<script src="{{ asset('js/document-scanner-webmrz.js') }}?v={{ filemtime(public_path('js/document-scanner-webmrz.js')) }}"></script>
 @endpush
 
 @push('scripts')

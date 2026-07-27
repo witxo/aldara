@@ -30,5 +30,6 @@
     </div>
     @livewireScripts
     @stack('scripts')
+    @vite(['resources/js/mrz-reader-entry.js'])
 </body>
 </html>

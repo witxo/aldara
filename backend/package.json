@@ -15,5 +15,9 @@
         "postcss": "^8.4",
         "tailwindcss": "^3.4",
         "vite": "^5.4"
+    },
+    "dependencies": {
+        "tesseract.js": "^5.1.1",
+        "web-mrz-reader": "^2.0.1"
     }
 }

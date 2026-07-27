@@ -1,0 +1,19 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-9FCkRjaT.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CiglKQh9.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  },
+  "resources/js/mrz-reader-entry.js": {
+    "file": "assets/mrz-reader-entry-Dc5bU8lj.js",
+    "name": "mrz-reader-entry",
+    "src": "resources/js/mrz-reader-entry.js",
+    "isEntry": true
+  }
+}

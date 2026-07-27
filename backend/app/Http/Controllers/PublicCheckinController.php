@@ -18,7 +18,8 @@ class PublicCheckinController extends Controller
             return view('public.checkin', ['error' => 'El enlace de check-in ha expirado o no es válido.']);
         }
 
-        return view('public.checkin', compact('reservation'));
+        $settings = current_tenant()?->settings ?? [];
+        return view('public.checkin', compact('reservation', 'settings'));
     }
 
     public function submit(Request $request, string $token)

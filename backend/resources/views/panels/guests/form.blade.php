@@ -5,6 +5,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="{{ asset('js/mrz-parser.js') }}?v={{ filemtime(public_path('js/mrz-parser.js')) }}"></script>
 <script src="{{ asset('js/document-scanner.js') }}?v={{ filemtime(public_path('js/document-scanner.js')) }}"></script>
+<script src="{{ asset('js/document-scanner-webmrz.js') }}?v={{ filemtime(public_path('js/document-scanner-webmrz.js')) }}"></script>
 @endpush
 
 @section('content')
@@ -25,7 +26,11 @@
                 <span class="text-xs text-blue-500">Los datos se rellenarán automáticamente</span>
             </div>
             <p class="text-xs text-blue-600 mb-3">El escaneo se procesa localmente en tu navegador.</p>
-            <x-document-scanner />
+            @if($settings['use_web_mrz_reader'] ?? false)
+                <x-document-scanner-webmrz />
+            @else
+                <x-document-scanner />
+            @endif
         </div>
 
         <form method="POST" action="{{ isset($guest) ? route('guests.update', $guest) : route('guests.store') }}"
