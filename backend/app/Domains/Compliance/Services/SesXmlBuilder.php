@@ -55,8 +55,7 @@ class SesXmlBuilder
             $persona = $dom->createElement('persona');
             $comunicacion->appendChild($persona);
 
-            $rol = $index === 0 ? 'RE' : 'VI';
-            $this->appendElement($persona, 'rol', $rol);
+            $this->appendElement($persona, 'rol', 'VI');
 
             $this->appendElement($persona, 'nombre', $guestData['nombre']);
             $this->appendElement($persona, 'apellido1', $guestData['apellido1']);
@@ -170,10 +169,10 @@ class SesXmlBuilder
     protected function mapDocumentType(?string $type): string
     {
         return match (strtolower($type ?? '')) {
-            'dni', 'nif' => 'NIF',
-            'nie' => 'NIE',
-            'passport', 'pasaporte' => 'PAS',
-            default => 'OTRO',
+            'dni', 'nif' => 'CP',
+            'nie' => 'TI',
+            'passport', 'pasaporte' => 'VI',
+            default => 'VI',
         };
     }
 
