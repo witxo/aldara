@@ -57,6 +57,7 @@ document.addEventListener('alpine:init', function () {
         var map = {
           documentType: 'Tipo',
           documentNumber: 'Nº documento',
+          supportNumber: 'Nº soporte',
           surname: 'Apellidos',
           givenNames: 'Nombre',
           birthDate: 'Fecha nacimiento',
@@ -413,6 +414,7 @@ document.addEventListener('alpine:init', function () {
         if (firstName) fields['first_name'] = firstName;
         if (lastName) fields['last_name'] = lastName;
         if (record.documentNumber) fields['document_number'] = record.documentNumber;
+        if (record.supportNumber) fields['document_support'] = record.supportNumber;
         if (record.birthDate) fields['birth_date'] = record.birthDate;
 
         if (record.docType) {

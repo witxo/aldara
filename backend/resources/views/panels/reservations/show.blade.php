@@ -44,7 +44,7 @@
                             <p class="font-medium">{{ $guest->first_name }} {{ $guest->last_name }}
                                 @if($guest->is_main_guest)<span class="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded ml-1">Principal</span>@endif
                             </p>
-                            <p class="text-sm text-gray-500">{{ $guest->document_type }}: {{ substr($guest->document_number, -4) }}... (cifrado) · {{ $guest->nationality }}</p>
+                            <p class="text-sm text-gray-500">{{ $guest->document_type }}: {{ substr($guest->document_number, -4) }}... (cifrado) · {{ $guest->nationality }}{{ $guest->document_support ? ' · Soporte: ' . $guest->document_support : '' }}</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <a href="{{ route('guests.edit', $guest) }}" class="text-blue-600 text-xs hover:underline">Editar</a>

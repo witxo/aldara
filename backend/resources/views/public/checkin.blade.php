@@ -97,6 +97,10 @@
                         <input type="text" name="guests[{{ $i }}][document_number]" id="g-document_number-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
+                        <label class="block text-sm font-medium text-gray-700" for="g-document_support-{{ $i }}">Nº soporte <span class="text-xs text-gray-400">(solo DNI español)</span></label>
+                        <input type="text" name="guests[{{ $i }}][document_support]" id="g-document_support-{{ $i }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-gray-700" for="g-nationality-{{ $i }}">Nacionalidad *</label>
                         <select name="guests[{{ $i }}][nationality]" id="g-nationality-{{ $i }}" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="ES">España</option>

@@ -21,6 +21,7 @@ class Guest extends Model
         'last_name',
         'document_type',
         'document_number',
+        'document_support',
         'nationality',
         'birth_date',
         'gender',

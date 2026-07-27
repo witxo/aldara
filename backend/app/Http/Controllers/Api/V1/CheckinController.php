@@ -61,6 +61,7 @@ class CheckinController extends Controller
             'guests.*.last_name' => 'required_with:guests|string|max:100',
             'guests.*.document_type' => 'required_with:guests|string|in:dni,nie,passport,other',
             'guests.*.document_number' => 'required_with:guests|string|max:50',
+            'guests.*.document_support' => 'nullable|string|max:20',
             'guests.*.nationality' => 'required_with:guests|string|size:2',
         ]);
 

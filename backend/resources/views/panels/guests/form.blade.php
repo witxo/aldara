@@ -58,6 +58,10 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nº documento *</label>
                     <input type="text" name="document_number" value="{{ old('document_number', $guest->document_number ?? '') }}" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                 </div>
+                <div x-data="{ docType: '{{ old('document_type', $guest->document_type ?? 'dni') }}' }" x-show="docType === 'dni'">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nº soporte (DNI)</label>
+                    <input type="text" name="document_support" value="{{ old('document_support', $guest->document_support ?? '') }}" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nacionalidad *</label>
                     <input type="text" name="nationality" value="{{ old('nationality', $guest->nationality ?? 'ES') }}" maxlength="2" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" required>

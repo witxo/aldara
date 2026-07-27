@@ -133,7 +133,7 @@ class SesXmlBuilder
             'apellido2' => '',
             'tipo_documento' => $this->mapDocumentType($guest->document_type),
             'numero_documento' => $guest->document_number,
-            'soporte_documento' => '',
+            'soporte_documento' => $guest->document_support ?? '',
             'fecha_nacimiento' => $guest->birth_date?->format('Y-m-d'),
             'nacionalidad' => strtoupper($guest->nationality ?? 'OTRO'),
             'sexo' => $this->mapGender($guest->gender),

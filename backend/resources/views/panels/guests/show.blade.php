@@ -7,7 +7,7 @@
             <h3 class="text-lg font-semibold mb-4">{{ $guest->first_name }} {{ $guest->last_name }}</h3>
             <div class="grid grid-cols-2 gap-4 text-sm">
                 <div><span class="text-gray-500">Nacionalidad:</span> {{ $guest->nationality }}</div>
-                <div><span class="text-gray-500">Documento:</span> {{ $guest->document_type }} — {{ $guest->document_number ? '****' . substr($guest->document_number, -4) : '—' }}</div>
+                <div><span class="text-gray-500">Documento:</span> {{ $guest->document_type }} — {{ $guest->document_number ? '****' . substr($guest->document_number, -4) : '—' }}{{ $guest->document_support ? ' (soporte: ' . $guest->document_support . ')' : '' }}</div>
                 <div><span class="text-gray-500">Fecha nacimiento:</span> {{ $guest->birth_date?->format('d/m/Y') ?? '—' }}</div>
                 <div><span class="text-gray-500">Email:</span> {{ $guest->email ?? '—' }}</div>
                 <div><span class="text-gray-500">Teléfono:</span> {{ $guest->phone ?? '—' }}</div>

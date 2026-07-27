@@ -194,6 +194,7 @@ var MRZParser = {
     var nationality = l2.length > 18 ? l2.substring(15, 18) : '';
 
     var optionalField = l1.length > 24 ? l1.substring(15, 24) : '';
+    var supportNumber = optionalField ? optionalField.replace(/</g, '') : '';
     var optDocNumber = optionalField ? this._cleanDocNumber(optionalField) : '';
     var docNumberLetters = (docNumberRaw.match(/[A-Z]/g) || []).length;
     if (docNumberLetters >= 3 && optDocNumber && optDocNumber.length >= 5) {
@@ -211,6 +212,7 @@ var MRZParser = {
       docType: mappedType,
       country: country,
       documentNumber: docNumber,
+      supportNumber: supportNumber,
       surname: surname,
       givenNames: givenNames,
       birthDate: this._parseDate(this._cleanDateField(birthDateRaw)),
