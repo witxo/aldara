@@ -26,7 +26,7 @@ class PublicCheckinController extends Controller
         $reservation = Reservation::where('checkin_token', $token)->firstOrFail();
 
         if (!$reservation->isTokenValid()) {
-            return back()->with('error', 'El enlace ha expirado.');
+            return redirect()->route('public.checkin.show', ['token' => $token]);
         }
 
         $adults = max(1, (int) $request->input('adults', $reservation->adults));
@@ -65,19 +65,23 @@ class PublicCheckinController extends Controller
             ['tenant_id' => $reservation->tenant_id, 'status' => 'pending']
         );
 
+        $existingGuests = Guest::where('reservation_id', $reservation->id)->get();
+
         foreach ($validated['guests'] as $i => $guestData) {
             $guestData['tenant_id'] = $reservation->tenant_id;
             $guestData['reservation_id'] = $reservation->id;
             $guestData['is_main_guest'] = $i === 0;
 
-            Guest::updateOrCreate(
-                [
-                    'reservation_id' => $reservation->id,
-                    'document_type' => $guestData['document_type'],
-                    'document_number' => $guestData['document_number'],
-                ],
-                $guestData
-            );
+            $matched = $existingGuests->first(function ($g) use ($guestData) {
+                return $g->document_type === $guestData['document_type']
+                    && $g->document_number === $guestData['document_number'];
+            });
+
+            if ($matched) {
+                $matched->update($guestData);
+            } else {
+                Guest::create($guestData);
+            }
         }
 
         $checkin->update([
