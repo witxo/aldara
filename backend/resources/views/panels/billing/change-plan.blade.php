@@ -27,8 +27,8 @@
                             <p class="text-2xl font-bold mt-2">{{ number_format($plan->price_yearly, 0) }} €<span class="text-sm font-normal text-gray-500">/año</span></p>
                             <p class="text-sm text-gray-500 mt-2">{{ $plan->description }}</p>
                             <ul class="text-xs text-gray-500 mt-3 space-y-1">
-                                <li>Máx. {{ $plan->max_properties ?? '∞' }} alojamientos</li>
-                                <li>Reservas ilimitadas</li>
+                            <li>Máx. {{ $plan->max_properties ?? '∞' }} alojamientos</li>
+                            <li>{{ $plan->max_reservations == -1 ? 'Reservas ilimitadas' : "{$plan->max_reservations} reservas/mes" }}</li>
                             </ul>
                             @if($plan->trial_days > 0)
                                 <div class="mt-3 text-xs text-blue-600 font-medium">{{ $plan->trial_days }} días de prueba</div>

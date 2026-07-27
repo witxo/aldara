@@ -75,7 +75,7 @@
                                     <ul class="mt-3 text-sm text-gray-600 space-y-1">
                                         <li>✓ {{ $plan->max_properties }} {{ $plan->max_properties === 1 ? 'alojamiento' : 'alojamientos' }}</li>
                                         <li>✓ {{ $plan->max_users }} {{ $plan->max_users === 1 ? 'usuario' : 'usuarios' }}</li>
-                                        <li>✓ Reservas ilimitadas</li>
+                                        <li>✓ {{ $plan->max_reservations == -1 ? 'Reservas ilimitadas' : $plan->max_reservations . ' reservas/mes' }}</li>
                                     </ul>
                                     <div class="mt-3 text-xs text-blue-600 font-medium">Prueba gratuita {{ $plan->trial_days }} días</div>
                                 </label>

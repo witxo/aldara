@@ -19,7 +19,7 @@
                 <div class="mt-4 grid grid-cols-3 gap-4 text-sm">
                     <div><span class="text-gray-500">Alojamientos:</span> {{ $subscription->plan->max_properties == -1 ? 'Ilimitados' : $subscription->plan->max_properties }}</div>
                     <div><span class="text-gray-500">Usuarios:</span> {{ $subscription->plan->max_users == -1 ? 'Ilimitados' : $subscription->plan->max_users }}</div>
-                    <div><span class="text-gray-500">Reservas:</span> Ilimitadas</div>
+                    <div><span class="text-gray-500">Reservas:</span> {{ $subscription->plan->max_reservations == -1 ? 'Ilimitadas' : $subscription->plan->max_reservations . '/mes' }}</div>
                 </div>
             @else
                 <p class="text-gray-500">Sin suscripción activa</p>
@@ -47,9 +47,9 @@
                             <ul class="mt-3 space-y-1 text-sm">
                                 <li>✓ {{ $plan->max_properties == -1 ? 'Alojamientos ilimitados' : "Hasta {$plan->max_properties} alojamientos" }}</li>
                                 <li>✓ {{ $plan->max_users == -1 ? 'Usuarios ilimitados' : "Hasta {$plan->max_users} usuarios" }}</li>
-                                <li>✓ Reservas ilimitadas</li>
-                            </ul>
-                            @if($plan->code === 'basic' || $plan->code === 'advanced')
+                            <li>✓ {{ $plan->max_reservations == -1 ? 'Reservas ilimitadas' : "{$plan->max_reservations} reservas/mes" }}</li>
+                        </ul>
+                        @if($plan->code === 'basic' || $plan->code === 'advanced')
                                 <div class="mt-3 text-xs text-blue-600 font-medium">Prueba {{ $plan->trial_days }} días</div>
                             @endif
                         </div>

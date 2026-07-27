@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Reservation;
 
 use App\Http\Controllers\Controller;
-use App\Domains\Reservation\Models\Reservation;
 use App\Domains\Property\Models\Property;
+use App\Domains\Reservation\Models\Reservation;
+use App\Domains\Tenant\Services\TenantService;
 use App\Events\ReservationCreated;
-use App\Jobs\SendCheckinEmail;
 use Illuminate\Http\Request;
 
 class ReservationController extends Controller
@@ -49,6 +49,12 @@ class ReservationController extends Controller
 
     public function store(Request $request)
     {
+        $tenant = current_tenant();
+        $service = app(TenantService::class);
+        if (!$service->canCreateReservation($tenant)) {
+            return redirect()->back()->withInput()->with('error', 'Límite mensual de reservas alcanzado (30/mes en tu plan).');
+        }
+
         $validated = $request->validate([
             'property_id' => 'required|exists:properties,id',
             'guest_name' => 'required|string|max:255',
@@ -62,7 +68,7 @@ class ReservationController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $validated['tenant_id'] = tenant_id();
+        $validated['tenant_id'] = $tenant->id;
         $validated['code'] = 'RES-' . strtoupper(substr(md5(uniqid()), 0, 8));
         $validated['status'] = 'confirmed';
 
