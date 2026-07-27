@@ -31,6 +31,32 @@
         </div>
 
         <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="font-semibold">Huéspedes ({{ $checkin->reservation->guests->count() }})</h4>
+            </div>
+            @if($checkin->reservation->guests->count() > 0)
+                <div class="space-y-3">
+                    @foreach($checkin->reservation->guests as $guest)
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div>
+                            <p class="font-medium">{{ $guest->first_name }} {{ $guest->last_name }}
+                                @if($guest->is_main_guest)<span class="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded ml-1">Principal</span>@endif
+                                @if($guest->checkin_id === $checkin->id)<span class="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded ml-1">Registrado</span>@endif
+                            </p>
+                            <p class="text-sm text-gray-500">{{ $guest->document_type }}: {{ substr($guest->document_number, -4) }}... (cifrado) · {{ $guest->nationality }}{{ $guest->document_support ? ' · Soporte: ' . $guest->document_support : '' }}</p>
+                        </div>
+                        <div>
+                            <a href="{{ route('guests.edit', $guest) }}" class="text-blue-600 text-xs hover:underline">Editar</a>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="text-gray-500 text-sm">No hay huéspedes registrados</p>
+            @endif
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
             <h4 class="font-semibold mb-4">Documentos ({{ $checkin->guestDocuments->count() }})</h4>
             @forelse($checkin->guestDocuments as $doc)
             <div class="flex items-center justify-between p-3 bg-gray-50 rounded mb-2 text-sm">
