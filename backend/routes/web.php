@@ -87,3 +87,6 @@ Route::prefix('/checkin')->name('public.checkin.')->group(function () {
 });
 
 Route::get('/property-logo/{property}', [\App\Http\Controllers\Property\PropertyController::class, 'logo'])->name('property.logo');
+
+Route::get('/contacto', [\App\Http\Controllers\ContactController::class, 'show'])->name('contacto.show');
+Route::post('/contacto', [\App\Http\Controllers\ContactController::class, 'send'])->name('contacto.send');

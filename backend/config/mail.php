@@ -43,6 +43,8 @@ return [
         'address' => env('MAIL_FROM_ADDRESS', 'noreply@checkin.local'),
         'name' => env('MAIL_FROM_NAME', 'Aldara'),
     ],
+    'contact_address' => env('MAIL_CONTACT_ADDRESS', env('MAIL_FROM_ADDRESS', 'info@ivema.es')),
+
     'markdown' => [
         'theme' => 'default',
         'paths' => [resource_path('views/vendor/mail')],

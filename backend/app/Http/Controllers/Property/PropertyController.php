@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Property;
 use App\Http\Controllers\Controller;
 use App\Domains\Property\Models\Property;
 use App\Domains\Compliance\Services\SesService;
+use App\Domains\Tenant\Services\TenantService;
 use Illuminate\Http\Request;
 
 class PropertyController extends Controller
@@ -41,7 +42,15 @@ class PropertyController extends Controller
             'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $validated['tenant_id'] = tenant_id();
+        $tenant = current_tenant();
+        $service = app(TenantService::class);
+        if (!$service->canAddProperty($tenant)) {
+            $plan = $tenant->activeSubscription?->plan;
+            $limit = $plan ? $plan->max_properties : 0;
+            return redirect()->back()->withInput()->with('error', "Has alcanzado el límite de {$limit} alojamiento(s) de tu plan. Actualiza tu plan para añadir más.");
+        }
+
+        $validated['tenant_id'] = $tenant->id;
         $validated['logo'] = $request->file('logo')?->store('properties', 'public');
         $property = Property::create($validated);
 

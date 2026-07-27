@@ -19,7 +19,7 @@
                 <div class="mt-4 grid grid-cols-3 gap-4 text-sm">
                     <div><span class="text-gray-500">Alojamientos:</span> {{ $subscription->plan->max_properties == -1 ? 'Ilimitados' : $subscription->plan->max_properties }}</div>
                     <div><span class="text-gray-500">Usuarios:</span> {{ $subscription->plan->max_users == -1 ? 'Ilimitados' : $subscription->plan->max_users }}</div>
-                    <div><span class="text-gray-500">Reservas/mes:</span> {{ $subscription->plan->max_reservations == -1 ? 'Ilimitadas' : $subscription->plan->max_reservations }}</div>
+                    <div><span class="text-gray-500">Reservas:</span> Ilimitadas</div>
                 </div>
             @else
                 <p class="text-gray-500">Sin suscripción activa</p>
@@ -29,15 +29,31 @@
             <h3 class="font-semibold mb-4">Planes disponibles</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 @foreach($plans as $plan)
-                <div class="border rounded-lg p-4 {{ $subscription?->plan_id === $plan->id ? 'border-blue-500 bg-blue-50' : '' }}">
-                    <p class="font-bold text-lg">{{ $plan->name }}</p>
-                    <p class="text-2xl font-bold mt-2">{{ $plan->price_monthly > 0 ? number_format($plan->price_monthly, 2) . '€' : 'Gratis' }}<span class="text-sm text-gray-500">/mes</span></p>
-                    <ul class="mt-3 space-y-1 text-sm">
-                        <li>✓ {{ $plan->max_properties == -1 ? 'Alojamientos ilimitados' : "Hasta {$plan->max_properties} alojamientos" }}</li>
-                        <li>✓ {{ $plan->max_users == -1 ? 'Usuarios ilimitados' : "Hasta {$plan->max_users} usuarios" }}</li>
-                        <li>✓ {{ $plan->max_reservations == -1 ? 'Reservas ilimitadas' : "{$plan->max_reservations} reservas/mes" }}</li>
-                    </ul>
-                </div>
+                    @if($plan->code === 'enterprise')
+                        <div class="border rounded-lg p-4 bg-gray-50 border-dashed flex flex-col items-center text-center">
+                            <p class="font-bold text-lg">{{ $plan->name }}</p>
+                            <p class="text-2xl font-bold mt-2 text-blue-600">Bajo demanda</p>
+                            <ul class="mt-3 space-y-1 text-sm text-center">
+                                <li>Alojamientos ilimitados</li>
+                                <li>Usuarios ilimitados</li>
+                                <li>Reservas ilimitadas</li>
+                            </ul>
+                            <a href="{{ route('contacto.show') }}" class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Contactar</a>
+                        </div>
+                    @else
+                        <div class="border rounded-lg p-4 {{ $subscription?->plan_id === $plan->id ? 'border-blue-500 bg-blue-50' : '' }}">
+                            <p class="font-bold text-lg">{{ $plan->name }}</p>
+                            <p class="text-2xl font-bold mt-2">{{ $plan->price_yearly > 0 ? number_format($plan->price_yearly, 0) . '€' : 'Gratis' }}<span class="text-sm text-gray-500">/año</span></p>
+                            <ul class="mt-3 space-y-1 text-sm">
+                                <li>✓ {{ $plan->max_properties == -1 ? 'Alojamientos ilimitados' : "Hasta {$plan->max_properties} alojamientos" }}</li>
+                                <li>✓ {{ $plan->max_users == -1 ? 'Usuarios ilimitados' : "Hasta {$plan->max_users} usuarios" }}</li>
+                                <li>✓ Reservas ilimitadas</li>
+                            </ul>
+                            @if($plan->code === 'basic' || $plan->code === 'advanced')
+                                <div class="mt-3 text-xs text-blue-600 font-medium">Prueba {{ $plan->trial_days }} días</div>
+                            @endif
+                        </div>
+                    @endif
                 @endforeach
             </div>
         </div>

@@ -30,7 +30,7 @@ class DemoTenantSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        $planId = DB::table('subscription_plans')->where('code', 'pro')->first()->id;
+        $planId = DB::table('subscription_plans')->where('code', 'enterprise')->first()->id;
 
         DB::table('subscriptions')->insert([
             'tenant_id' => $tenantId,

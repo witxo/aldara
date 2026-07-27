@@ -54,24 +54,32 @@
 
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-3">Selecciona tu plan</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         @foreach($plans as $plan)
-                        <label class="relative border rounded-lg p-4 cursor-pointer transition {{ old('plan') === $plan->code ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500' : 'border-gray-200 hover:border-blue-300' }}">
-                            <input type="radio" name="plan" value="{{ $plan->code }}" class="sr-only" {{ old('plan') === $plan->code ? 'checked' : ($loop->first ? 'checked' : '') }}>
-                            <div class="font-semibold text-gray-900">{{ $plan->name }}</div>
-                            <div class="text-2xl font-bold text-blue-600 mt-1">{{ number_format($plan->price_monthly, 0) }}€<span class="text-sm font-normal text-gray-500">/mes</span></div>
-                            <ul class="mt-3 text-sm text-gray-600 space-y-1">
-                                <li>✓ {{ $plan->max_properties }} {{ $plan->max_properties === 1 ? 'alojamiento' : 'alojamientos' }}</li>
-                                <li>✓ {{ $plan->max_users }} {{ $plan->max_users === 1 ? 'usuario' : 'usuarios' }}</li>
-                                <li>✓ {{ $plan->max_reservations === -1 ? 'Reservas ilimitadas' : $plan->max_reservations . ' reservas/mes' }}</li>
-                                @if($plan->code === 'pro')
-                                <li>✓ SES automático</li>
-                                <li>✓ Conectores Booking/Airbnb</li>
-                                <li>✓ Soporte prioritario</li>
-                                @endif
-                            </ul>
-                            <div class="mt-3 text-xs text-blue-600 font-medium">Prueba gratuita 15 días</div>
-                        </label>
+                            @if($plan->code === 'enterprise')
+                                <div class="relative border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col items-center text-center">
+                                    <div class="font-semibold text-gray-900">{{ $plan->name }}</div>
+                                    <div class="text-2xl font-bold text-blue-600 mt-1">Bajo demanda</div>
+                                    <ul class="mt-3 text-sm text-gray-600 space-y-1">
+                                        <li>✓ Alojamientos ilimitados</li>
+                                        <li>✓ Usuarios ilimitados</li>
+                                        <li>✓ Reservas ilimitadas</li>
+                                    </ul>
+                                    <a href="{{ route('contacto.show') }}" class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Contactar</a>
+                                </div>
+                            @else
+                                <label class="relative border rounded-lg p-4 cursor-pointer transition {{ old('plan') === $plan->code ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500' : 'border-gray-200 hover:border-blue-300' }}">
+                                    <input type="radio" name="plan" value="{{ $plan->code }}" class="sr-only" {{ old('plan') === $plan->code ? 'checked' : ($loop->first ? 'checked' : '') }}>
+                                    <div class="font-semibold text-gray-900">{{ $plan->name }}</div>
+                                    <div class="text-2xl font-bold text-blue-600 mt-1">{{ number_format($plan->price_yearly, 0) }}€<span class="text-sm font-normal text-gray-500">/año</span></div>
+                                    <ul class="mt-3 text-sm text-gray-600 space-y-1">
+                                        <li>✓ {{ $plan->max_properties }} {{ $plan->max_properties === 1 ? 'alojamiento' : 'alojamientos' }}</li>
+                                        <li>✓ {{ $plan->max_users }} {{ $plan->max_users === 1 ? 'usuario' : 'usuarios' }}</li>
+                                        <li>✓ Reservas ilimitadas</li>
+                                    </ul>
+                                    <div class="mt-3 text-xs text-blue-600 font-medium">Prueba gratuita {{ $plan->trial_days }} días</div>
+                                </label>
+                            @endif
                         @endforeach
                     </div>
                     @error('plan') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror

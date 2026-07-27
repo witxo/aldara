@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Domains\Property\Models\Property;
 use App\Domains\Reservation\Models\Reservation;
+use App\Domains\Tenant\Services\TenantService;
 use Illuminate\Http\Request;
 
 class PropertyController extends Controller
@@ -43,7 +44,19 @@ class PropertyController extends Controller
             'ses_codigo_arrendador' => 'nullable|string|max:10',
         ]);
 
-        $validated['tenant_id'] = tenant_id();
+        $tenant = current_tenant();
+        $service = app(TenantService::class);
+        if (!$service->canAddProperty($tenant)) {
+            $plan = $tenant->activeSubscription?->plan;
+            $limit = $plan ? $plan->max_properties : 0;
+            return response()->json([
+                'data' => null,
+                'message' => "Has alcanzado el límite de {$limit} alojamiento(s) de tu plan.",
+                'status' => 403,
+            ], 403);
+        }
+
+        $validated['tenant_id'] = $tenant->id;
         $property = Property::create($validated);
 
         return response()->json([

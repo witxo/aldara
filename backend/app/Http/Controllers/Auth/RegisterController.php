@@ -29,7 +29,7 @@ class RegisterController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'company_name' => 'required|string|max:255',
             'tax_id' => 'nullable|string|max:20',
-            'plan' => 'required|string|in:basico,pro',
+            'plan' => 'required|string|in:basic,advanced',
         ]);
 
         $user = User::create([
