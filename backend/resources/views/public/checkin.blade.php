@@ -224,72 +224,68 @@
     function initSignature() {
         var canvas = document.getElementById('signature-pad');
         if (!canvas || canvas._initialized) return;
-        canvas._initialized = true;
 
-        var ctx = canvas.getContext('2d');
-        var drawing = false;
-        var lastX = 0, lastY = 0;
+        requestAnimationFrame(function () {
+            canvas._initialized = true;
 
-        function resize() {
+            var ctx = canvas.getContext('2d');
+            var drawing = false;
+            var lastX = 0, lastY = 0;
+
             var rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width;
+            canvas.width = rect.width || canvas.parentElement.clientWidth || 600;
             canvas.height = 150;
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 2;
             ctx.lineCap = 'round';
-        }
-        resize();
 
-        canvas.addEventListener('mousedown', function (e) {
-            drawing = true;
-            var rect = canvas.getBoundingClientRect();
-            lastX = e.clientX - rect.left;
-            lastY = e.clientY - rect.top;
-        });
-        canvas.addEventListener('mousemove', function (e) {
-            if (!drawing) return;
-            var rect = canvas.getBoundingClientRect();
-            var x = e.clientX - rect.left;
-            var y = e.clientY - rect.top;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            lastX = x;
-            lastY = y;
-            document.getElementById('signature-data').value = canvas.toDataURL();
-        });
-        canvas.addEventListener('mouseup', function () { drawing = false; });
-        canvas.addEventListener('mouseleave', function () { drawing = false; });
+            canvas.addEventListener('mousedown', function (e) {
+                drawing = true;
+                var r = canvas.getBoundingClientRect();
+                lastX = e.clientX - r.left;
+                lastY = e.clientY - r.top;
+            });
+            canvas.addEventListener('mousemove', function (e) {
+                if (!drawing) return;
+                var r = canvas.getBoundingClientRect();
+                var x = e.clientX - r.left;
+                var y = e.clientY - r.top;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                lastX = x;
+                lastY = y;
+                document.getElementById('signature-data').value = canvas.toDataURL();
+            });
+            canvas.addEventListener('mouseup', function () { drawing = false; });
+            canvas.addEventListener('mouseleave', function () { drawing = false; });
 
-        canvas.addEventListener('touchstart', function (e) {
-            e.preventDefault();
-            var rect = canvas.getBoundingClientRect();
-            var touch = e.touches[0];
-            lastX = touch.clientX - rect.left;
-            lastY = touch.clientY - rect.top;
-            drawing = true;
+            canvas.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                var r = canvas.getBoundingClientRect();
+                var touch = e.touches[0];
+                lastX = touch.clientX - r.left;
+                lastY = touch.clientY - r.top;
+                drawing = true;
+            });
+            canvas.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+                if (!drawing) return;
+                var r = canvas.getBoundingClientRect();
+                var touch = e.touches[0];
+                var x = touch.clientX - r.left;
+                var y = touch.clientY - r.top;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                lastX = x;
+                lastY = y;
+                document.getElementById('signature-data').value = canvas.toDataURL();
+            });
+            canvas.addEventListener('touchend', function () { drawing = false; });
         });
-        canvas.addEventListener('touchmove', function (e) {
-            e.preventDefault();
-            if (!drawing) return;
-            var rect = canvas.getBoundingClientRect();
-            var touch = e.touches[0];
-            var x = touch.clientX - rect.left;
-            var y = touch.clientY - rect.top;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            lastX = x;
-            lastY = y;
-            document.getElementById('signature-data').value = canvas.toDataURL();
-        });
-        canvas.addEventListener('touchend', function () { drawing = false; });
-    }
-
-    if (document.getElementById('signature-pad')) {
-        initSignature();
     }
 
     window.clearSignature = function () {
