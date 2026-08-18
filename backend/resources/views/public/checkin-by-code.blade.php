@@ -1,8 +1,8 @@
-@extends('layouts.checkin')
+﻿@extends('layouts.checkin')
 
 @section('title', 'Check-in Online')
-@section('property_logo', isset($property) && $property->logo_url ? $property->logo_url : asset('images/logo_aldara.png'))
-@section('property_favicon', isset($property) && $property->logo_url ? $property->logo_url : asset('images/logo_aldara.png'))
+@section('property_logo', isset($property) && $property->logo_url ? $property->logo_url : asset('images/logo_hospedacheck.png'))
+@section('property_favicon', isset($property) && $property->logo_url ? $property->logo_url : asset('images/logo_hospedacheck.png'))
 @section('property_name', isset($property) ? $property->name : config('app.name'))
 @section('property_title', isset($property) ? 'Check-in — ' . $property->name : 'Check-in Online')
 @section('property_subtitle', 'Check-in online')

@@ -18,7 +18,7 @@ class GuestFormScreen extends StatefulWidget {
 
 class _GuestFormScreenState extends State<GuestFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _firstName, _lastName, _docNumber, _nationality, _birthDate, _email, _phone, _parentesco, _address, _city, _postalCode;
+  late TextEditingController _firstName, _lastName, _lastName2, _docNumber, _nationality, _birthDate, _email, _phone, _parentesco, _address, _city, _postalCode;
   String _docType = 'dni';
   String _gender = '';
   bool _isMainGuest = false;
@@ -31,6 +31,7 @@ class _GuestFormScreenState extends State<GuestFormScreen> {
     final g = widget.guest as Map<String, dynamic>?;
     _firstName = TextEditingController(text: g?['first_name'] ?? '');
     _lastName = TextEditingController(text: g?['last_name'] ?? '');
+    _lastName2 = TextEditingController(text: g?['last_name2'] ?? '');
     _docNumber = TextEditingController(text: g?['document_number'] ?? '');
     _nationality = TextEditingController(text: g?['nationality'] ?? 'ES');
     _birthDate = TextEditingController(text: g?['birth_date'] ?? '');
@@ -47,7 +48,7 @@ class _GuestFormScreenState extends State<GuestFormScreen> {
 
   @override
   void dispose() {
-    _firstName.dispose(); _lastName.dispose(); _docNumber.dispose();
+    _firstName.dispose(); _lastName.dispose(); _lastName2.dispose(); _docNumber.dispose();
     _nationality.dispose(); _birthDate.dispose(); _email.dispose();
     _phone.dispose(); _parentesco.dispose(); _address.dispose();
     _city.dispose(); _postalCode.dispose();
@@ -60,6 +61,7 @@ class _GuestFormScreenState extends State<GuestFormScreen> {
       if (result.documentNumber != null) _docNumber.text = result.documentNumber!;
       if (result.firstName != null) _firstName.text = result.firstName!;
       if (result.lastName != null) _lastName.text = result.lastName!;
+      if (result.lastName2 != null) _lastName2.text = result.lastName2!;
       if (result.nationality != null) _nationality.text = result.nationality!;
       if (result.birthDate != null) _birthDate.text = result.birthDate!;
       if (result.gender != null) _gender = result.gender!;
@@ -80,6 +82,7 @@ class _GuestFormScreenState extends State<GuestFormScreen> {
       final data = <String, dynamic>{
         'first_name': _firstName.text,
         'last_name': _lastName.text,
+        'last_name2': _lastName2.text.isEmpty ? null : _lastName2.text,
         'document_type': _docType,
         'document_number': _docNumber.text,
         'nationality': _nationality.text.toUpperCase(),
@@ -123,8 +126,10 @@ class _GuestFormScreenState extends State<GuestFormScreen> {
               Row(children: [
                 Expanded(child: TextFormField(controller: _firstName, decoration: const InputDecoration(labelText: 'Nombre'), validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null)),
                 const SizedBox(width: 12),
-                Expanded(child: TextFormField(controller: _lastName, decoration: const InputDecoration(labelText: 'Apellidos'), validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null)),
+                Expanded(child: TextFormField(controller: _lastName, decoration: const InputDecoration(labelText: 'Apellido 1'), validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null)),
               ]),
+              if (_docType == 'dni' || _docType == 'nie')
+                Padding(padding: const EdgeInsets.only(top: 12), child: TextFormField(controller: _lastName2, decoration: const InputDecoration(labelText: 'Segundo apellido'))),
               const SizedBox(height: 12),
               Row(children: [
                 Expanded(child: DropdownButtonFormField<String>(

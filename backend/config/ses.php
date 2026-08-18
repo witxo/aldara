@@ -5,7 +5,7 @@ return [
     'username' => env('SES_USERNAME'),
     'password' => env('SES_PASSWORD'),
     'codigo_arrendador' => env('SES_ARRENDADOR_CODE'),
-    'aplicacion' => env('SES_APP_NAME', 'Aldara'),
+    'aplicacion' => env('SES_APP_NAME', 'HospedaCheck'),
     'endpoint_pruebas' => 'https://hospedajes.pre-ses.mir.es/hospedajes-web/ws/v1/comunicacion',
     'endpoint_produccion' => 'https://hospedajes.ses.mir.es/hospedajes-web/ws/v1/comunicacion',
     'endpoint' => env('SES_ENDPOINT'),

@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" type="image/png" href="{{ asset('images/logo_aldara.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_hospedacheck.png') }}">
     <title>{{ config('app.name') }} — Gestión de visitantes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -21,7 +21,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
             <a href="#hero" class="flex items-center gap-2">
-                <img src="{{ asset('images/logo_aldara.png') }}" alt="Aldara" class="h-8 w-8">
+                <img src="{{ asset('images/logo_hospedacheck.png') }}" alt="HospedaCheck" class="h-8 w-8">
                 <span class="font-bold text-xl text-blue-600">{{ config('app.name') }}</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
@@ -47,7 +47,7 @@
                     <span class="text-blue-600">de forma sencilla y legal</span>
                 </h1>
                 <p class="mt-6 text-lg text-gray-600 max-w-xl">
-                    Aldara te permite cumplir con la normativa SES Hospedajes, escanear documentos con MRZ,
+                    HospedaCheck te permite cumplir con la normativa SES Hospedajes, escanear documentos con MRZ,
                     gestionar huéspedes y conectar con tus OTAs favoritas. Todo desde un solo panel.
                 </p>
                 <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -227,9 +227,9 @@
         return {
             current: 0,
             testimonials: [
-                { text: 'Aldara me ha simplificado muchísimo el check-in. Mis huéspedes lo hacen todo desde el móvil y yo recibo los datos al instante. El envío a SES ya no es un dolor de cabeza.', name: 'María García', role: 'Gestora turística — Málaga', initials: 'MG' },
-                { text: 'Probé varias herramientas y Aldara es la más completa para el tema SES. El escáner MRZ funciona muy bien, reconoce todos los documentos.', name: 'Carlos López', role: 'Propietario — Barcelona', initials: 'CL' },
-                { text: 'Desde que uso Aldara he reducido el tiempo de check-in un 80%. Mis clientes valoran poder dejar los datos antes de llegar. Muy recomendable.', name: 'Ana Martínez', role: 'Agencia inmobiliaria — Madrid', initials: 'AM' },
+                { text: 'HospedaCheck me ha simplificado muchísimo el check-in. Mis huéspedes lo hacen todo desde el móvil y yo recibo los datos al instante. El envío a SES ya no es un dolor de cabeza.', name: 'María García', role: 'Gestora turística — Málaga', initials: 'MG' },
+                { text: 'Probé varias herramientas y HospedaCheck es la más completa para el tema SES. El escáner MRZ funciona muy bien, reconoce todos los documentos.', name: 'Carlos López', role: 'Propietario — Barcelona', initials: 'CL' },
+                { text: 'Desde que uso HospedaCheck he reducido el tiempo de check-in un 80%. Mis clientes valoran poder dejar los datos antes de llegar. Muy recomendable.', name: 'Ana Martínez', role: 'Agencia inmobiliaria — Madrid', initials: 'AM' },
             ],
             init() {
                 this._interval = setInterval(() => { this.next(); }, 5000);
@@ -251,7 +251,7 @@
 <section class="py-16 md:py-24 bg-gradient-to-br from-blue-600 to-blue-800">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl md:text-4xl font-bold text-white">¿Listo para simplificar tu gestión?</h2>
-        <p class="mt-4 text-lg text-blue-100">Únete a los profesionales que ya confían en Aldara. Prueba gratuita de 15 días, sin compromiso.</p>
+        <p class="mt-4 text-lg text-blue-100">Únete a los profesionales que ya confían en HospedaCheck. Prueba gratuita de 15 días, sin compromiso.</p>
         <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <a href="{{ route('register') }}" class="bg-white text-blue-700 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-50 transition shadow-lg">
                 Crear cuenta gratuita
@@ -270,7 +270,7 @@
         <div class="grid md:grid-cols-3 gap-8">
             <div>
                 <div class="flex items-center gap-2 mb-4">
-                    <img src="{{ asset('images/logo_aldara.png') }}" alt="Aldara" class="h-8 w-8">
+                    <img src="{{ asset('images/logo_hospedacheck.png') }}" alt="HospedaCheck" class="h-8 w-8">
                     <span class="font-bold text-xl text-white">{{ config('app.name') }}</span>
                 </div>
                 <p class="text-sm">Gestión de visitantes y cumplimiento SES Hospedajes.</p>

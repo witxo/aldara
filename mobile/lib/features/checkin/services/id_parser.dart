@@ -3,6 +3,7 @@ class ParsedId {
   final String documentNumber;
   final String? firstName;
   final String? lastName;
+  final String? lastName2;
   final String? birthDate;
   final String? nationality;
   final String? gender;
@@ -14,6 +15,7 @@ class ParsedId {
     required this.documentNumber,
     this.firstName,
     this.lastName,
+    this.lastName2,
     this.birthDate,
     this.nationality,
     this.gender,
@@ -174,6 +176,7 @@ class IdParser {
     String expiryDate = '';
     String nationality = '';
     String lastName = '';
+    String lastName2 = '';
     String firstName = '';
 
     // Document number from line1 (positions 5-13, 0-indexed)
@@ -220,14 +223,16 @@ class IdParser {
       }
     }
 
-    // Name from line3: SURNAME<<FIRST_NAME<<...
+    // Name from line3: SURNAME1<SURNAME2<<FIRST_NAME<<...
     if (line3.isNotEmpty) {
       final parts = line3.split('<<');
       if (parts.isNotEmpty) {
-        lastName = parts[0].replaceAll('<', ' ').trim();
+        final surnameBlock = parts[0];
+        final surnameParts = surnameBlock.split('<').where((s) => s.isNotEmpty).toList();
+        lastName = surnameParts.isNotEmpty ? surnameParts[0].trim() : '';
+        lastName2 = surnameParts.length > 1 ? surnameParts.sublist(1).join(' ').trim() : '';
       }
       if (parts.length > 1) {
-        // Join all remaining parts with space (handles multi-word first names)
         firstName = parts.sublist(1).join(' ').replaceAll('<', ' ').trim();
       }
     }
@@ -247,6 +252,7 @@ class IdParser {
       documentNumber: docNumber,
       firstName: firstName.isNotEmpty ? firstName : null,
       lastName: lastName.isNotEmpty ? lastName : null,
+      lastName2: lastName2.isNotEmpty ? lastName2 : null,
       birthDate: birthDate.isNotEmpty ? birthDate : null,
       nationality: nationality.isNotEmpty ? nationality : null,
       gender: gender.isNotEmpty ? gender : null,
@@ -260,6 +266,7 @@ class IdParser {
     if (firstLine.length < 10 || secondLine.length < 10) return null;
 
     String lastName = '';
+    String lastName2 = '';
     String firstName = '';
     String docNumber = '';
     String nationality = '';
@@ -267,12 +274,16 @@ class IdParser {
     String gender = '';
     String expiryDate = '';
 
-    // Name from firstLine: P<ESP<SURNAME<<FIRST_NAME<<...
+    // Name from firstLine: P<ESP<SURNAME1<SURNAME2<<FIRST_NAME<<...
     final afterPrefix = firstLine.replaceFirst(RegExp(r'P<[A-Z]{3}<'), '');
     final names = afterPrefix.split('<<');
-    lastName = names.isNotEmpty ? names[0].replaceAll('<', ' ').trim() : '';
+    if (names.isNotEmpty) {
+      final surnameBlock = names[0];
+      final surnameParts = surnameBlock.split('<').where((s) => s.isNotEmpty).toList();
+      lastName = surnameParts.isNotEmpty ? surnameParts[0].trim() : '';
+      lastName2 = surnameParts.length > 1 ? surnameParts.sublist(1).join(' ').trim() : '';
+    }
     if (names.length > 1) {
-      // Join all remaining parts with space (handles multi-word first names)
       firstName = names.sublist(1).join(' ').replaceAll('<', ' ').trim();
     }
 
@@ -328,6 +339,7 @@ class IdParser {
       documentNumber: docNumber,
       firstName: firstName.isNotEmpty ? firstName : null,
       lastName: lastName.isNotEmpty ? lastName : null,
+      lastName2: lastName2.isNotEmpty ? lastName2 : null,
       birthDate: birthDate.isNotEmpty ? birthDate : null,
       nationality: nationality.isNotEmpty ? nationality : null,
       gender: gender.isNotEmpty ? gender : null,

@@ -1,6 +1,6 @@
-<aside class="w-64 bg-white border-r border-gray-200 hidden lg:flex flex-col">
+﻿<aside class="w-64 bg-white border-r border-gray-200 hidden lg:flex flex-col">
     <div class="p-4 border-b border-gray-200">
-        <img src="{{ asset('images/logo_aldara.png') }}" alt="Aldara" class="h-8 mb-2">
+        <img src="{{ asset('images/logo_hospedacheck.png') }}" alt="HospedaCheck" class="h-8 mb-2">
         <h1 class="text-xl font-bold text-blue-600">{{ config('app.name') }}</h1>
         @if($tenant = current_tenant())
             <p class="text-sm text-gray-500 mt-1">{{ $tenant->company_name }}</p>

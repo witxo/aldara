@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Contacto')
 
@@ -6,7 +6,7 @@
 <div class="min-h-screen flex items-center justify-center py-8">
     <div class="w-full max-w-lg">
         <div class="text-center mb-8">
-            <img src="{{ asset('images/logo_aldara.png') }}" alt="Aldara" class="h-16 mx-auto mb-3">
+            <img src="{{ asset('images/logo_hospedacheck.png') }}" alt="HospedaCheck" class="h-16 mx-auto mb-3">
             <h1 class="text-3xl font-bold text-blue-600">{{ config('app.name') }}</h1>
             <p class="text-gray-500 mt-2">Contacta con nosotros</p>
         </div>

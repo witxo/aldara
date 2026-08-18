@@ -56,7 +56,7 @@ if (!function_exists('tenant_ses_config')) {
                 'username' => $property->ses_username ?? $settings['ses_username'] ?? config('ses.username'),
                 'password' => $property->ses_password ?? $settings['ses_password'] ?? config('ses.password'),
                 'codigo_arrendador' => $property->ses_codigo_arrendador ?? $settings['ses_codigo_arrendador'] ?? config('ses.codigo_arrendador'),
-                'aplicacion' => config('ses.aplicacion', 'Aldara'),
+                'aplicacion' => config('ses.aplicacion', 'HospedaCheck'),
                 'endpoint' => config('ses.endpoint'),
             ];
         } else {
@@ -64,7 +64,7 @@ if (!function_exists('tenant_ses_config')) {
                 'username' => $settings['ses_username'] ?? config('ses.username'),
                 'password' => $settings['ses_password'] ?? config('ses.password'),
                 'codigo_arrendador' => $settings['ses_codigo_arrendador'] ?? config('ses.codigo_arrendador'),
-                'aplicacion' => config('ses.aplicacion', 'Aldara'),
+                'aplicacion' => config('ses.aplicacion', 'HospedaCheck'),
                 'endpoint' => config('ses.endpoint'),
             ];
         }

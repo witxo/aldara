@@ -1,4 +1,4 @@
-# CheckIn SaaS
+# HospedaCheck (CheckIn SaaS)
 
 Plataforma multi-tenant SaaS para registro de viajeros en alojamientos turísticos en España, con envío a SES.Hospedajes.
 

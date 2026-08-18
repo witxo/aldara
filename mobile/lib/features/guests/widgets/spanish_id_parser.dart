@@ -3,6 +3,7 @@ class IdParseResult {
   final String? documentNumber;
   final String? firstName;
   final String? lastName;
+  final String? lastName2;
   final String? nationality;
   final String? birthDate;
   final String? gender;
@@ -12,6 +13,7 @@ class IdParseResult {
     this.documentNumber,
     this.firstName,
     this.lastName,
+    this.lastName2,
     this.nationality,
     this.birthDate,
     this.gender,

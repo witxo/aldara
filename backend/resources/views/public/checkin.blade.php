@@ -1,4 +1,4 @@
-@extends('layouts.checkin')
+﻿@extends('layouts.checkin')
 
 @section('title', 'Check-in Online')
 
@@ -6,11 +6,11 @@
 @php $maxGuests = config('checkin.max_guests', 20); @endphp
 @php $resInitialAdults = isset($reservation) ? (int) $reservation->adults : 1; @endphp
 @php $resInitialChildren = isset($reservation) ? (int) $reservation->children : 0; @endphp
-@section('property_logo', $prop?->logo_url ?? asset('images/logo_aldara.png'))
-@section('property_favicon', $prop?->logo_url ?? asset('images/logo_aldara.png'))
+@section('property_logo', $prop?->logo_url ?? asset('images/logo_hospedacheck.png'))
+@section('property_favicon', $prop?->logo_url ?? asset('images/logo_hospedacheck.png'))
 @section('property_name', $prop?->name ?? config('app.name'))
 @section('property_title', $prop ? 'Check-in — ' . $prop->name : 'Check-in Online')
-@section('property_subtitle', $prop ? 'Check-in online' : 'Aldara, gestión de visitantes')
+@section('property_subtitle', $prop ? 'Check-in online' : 'HospedaCheck, gestión de visitantes')
 
 @section('content')
 @if(isset($error))

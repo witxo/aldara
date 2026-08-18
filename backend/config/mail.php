@@ -41,7 +41,7 @@ return [
     ],
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'noreply@checkin.local'),
-        'name' => env('MAIL_FROM_NAME', 'Aldara'),
+        'name' => env('MAIL_FROM_NAME', 'HospedaCheck'),
     ],
     'contact_address' => env('MAIL_CONTACT_ADDRESS', env('MAIL_FROM_ADDRESS', 'info@ivema.es')),
 

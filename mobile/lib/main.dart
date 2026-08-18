@@ -31,15 +31,16 @@ import 'features/settings/screens/settings_screen.dart';
 import 'features/tenants/screens/tenant_selector_screen.dart';
 import 'features/admin/screens/admin_dashboard_screen.dart';
 import 'features/admin/screens/admin_tenant_list_screen.dart';
+import 'features/contact/screens/contact_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es', null);
-  runApp(const AldaraApp());
+  runApp(const HospedaCheckApp());
 }
 
-class AldaraApp extends StatelessWidget {
-  const AldaraApp({super.key});
+class HospedaCheckApp extends StatelessWidget {
+  const HospedaCheckApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +51,7 @@ class AldaraApp extends StatelessWidget {
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) {
           return MaterialApp(
-            title: 'Aldara',
+            title: 'HospedaCheck',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             locale: Locale(auth.user?['language'] as String? ?? 'es'),
@@ -112,6 +113,8 @@ class AldaraApp extends StatelessWidget {
                   return _pageRoute(const IntegrationListScreen(), settings);
                 case '/ses':
                   return _pageRoute(const SesListScreen(), settings);
+                case '/contact':
+                  return _pageRoute(const ContactScreen(), settings);
                 case '/billing':
                   return _pageRoute(const BillingScreen(), settings);
                 case '/users':

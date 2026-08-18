@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy script for aldara.ivema.es
+# Deploy script for aldara.ivema.es (dominio actual; al migrar, cambiar DOMAIN a hospedacheck.es)
 # Usage: ./deploy.sh
 # Run from /opt/aldara (the git repo root)
 

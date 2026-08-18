@@ -30,7 +30,7 @@ class AppLocalizations {
   }
 
   static Map<String, String> get _esStrings => {
-    'app.name': 'Aldara',
+    'app.name': 'HospedaCheck',
     'app.tagline': 'Gestión de visitantes',
 
     'nav.dashboard': 'Dashboard',
@@ -135,7 +135,8 @@ class AppLocalizations {
     'guest.title': 'Huéspedes',
     'guest.detail': 'Detalle del huésped',
     'guest.first_name': 'Nombre',
-    'guest.last_name': 'Apellidos',
+    'guest.last_name': 'Apellido 1',
+    'guest.last_name2': 'Segundo apellido',
     'guest.document_type': 'Tipo documento',
     'guest.document_number': 'Nº documento',
     'guest.nationality': 'Nacionalidad',
@@ -206,7 +207,7 @@ class AppLocalizations {
   };
 
   static Map<String, String> get _enStrings => {
-    'app.name': 'Aldara',
+    'app.name': 'HospedaCheck',
     'app.tagline': 'Visitor Management',
 
     'nav.dashboard': 'Dashboard',
@@ -312,6 +313,7 @@ class AppLocalizations {
     'guest.detail': 'Guest detail',
     'guest.first_name': 'First name',
     'guest.last_name': 'Last name',
+    'guest.last_name2': 'Second surname',
     'guest.document_type': 'Document type',
     'guest.document_number': 'Document #',
     'guest.nationality': 'Nationality',

@@ -1,5 +1,5 @@
-name: aldara_mobile
-description: Aldara - Gestión de visitantes
+name: hospedacheck_mobile
+description: HospedaCheck - Gestión de visitantes y envío a SES Hospedajes
 publish_to: 'none'
 version: 1.0.0+1
 

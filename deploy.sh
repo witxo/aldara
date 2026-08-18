@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DOMAIN="${1:-aldara.ivema.es}"
-echo "=== Desplegando Aldara en: $DOMAIN (vía Plesk reverse proxy) ==="
+echo "=== Desplegando HospedaCheck en: $DOMAIN (vía Plesk reverse proxy) ==="
 
 echo "=== 1. Instalando Docker ==="
 if ! command -v docker &> /dev/null; then

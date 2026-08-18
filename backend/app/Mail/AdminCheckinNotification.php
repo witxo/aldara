@@ -20,7 +20,7 @@ class AdminCheckinNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Nuevo check-in completado - ' . ($this->checkin->reservation->property->name ?? 'Aldara'),
+            subject: 'Nuevo check-in completado - ' . ($this->checkin->reservation->property->name ?? 'HospedaCheck'),
         );
     }
 

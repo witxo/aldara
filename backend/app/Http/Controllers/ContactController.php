@@ -28,7 +28,7 @@ class ContactController extends Controller
                 "Nombre: {$validated['name']}\nEmail: {$validated['email']}\n\n{$validated['message']}",
                 function ($message) use ($validated, $destino) {
                     $message->to($destino)
-                        ->subject('[Aldara Contacto] ' . $validated['subject'])
+                        ->subject('[HospedaCheck Contacto] ' . $validated['subject'])
                         ->replyTo($validated['email']);
                 }
             );

@@ -8,7 +8,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus"/>
 
     <application
-        android:label="Aldara"
+        android:label="HospedaCheck"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

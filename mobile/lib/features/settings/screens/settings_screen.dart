@@ -42,6 +42,12 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
         ])),
+        const SizedBox(height: 16),
+        AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Soporte', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 12),
+          ListTile(contentPadding: EdgeInsets.zero, leading: const Icon(Icons.mail_outline, color: AppColors.primary), title: const Text('Contacto'), subtitle: const Text('Envíanos un mensaje', style: TextStyle(fontSize: 12)), onTap: () => Navigator.pushNamed(context, '/contact')),
+        ])),
       ]),
     );
   }

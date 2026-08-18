@@ -16,6 +16,7 @@ class _PresentialCheckinScreenState extends State<PresentialCheckinScreen> {
   final _searchController = TextEditingController();
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
+  final _surname2Controller = TextEditingController();
   final _docNumberController = TextEditingController();
   final _nationalityController = TextEditingController(text: 'ES');
   final _birthDateController = TextEditingController();
@@ -84,6 +85,7 @@ class _PresentialCheckinScreenState extends State<PresentialCheckinScreen> {
         _docNumberController.text = result.documentNumber;
         if (result.firstName != null) _nameController.text = result.firstName!;
         if (result.lastName != null) _surnameController.text = result.lastName!;
+        if (result.lastName2 != null) _surname2Controller.text = result.lastName2!;
         if (result.birthDate != null) _birthDateController.text = result.birthDate!;
         if (result.nationality != null) _nationalityController.text = result.nationality!;
         _scanned = true;
@@ -104,6 +106,7 @@ class _PresentialCheckinScreenState extends State<PresentialCheckinScreen> {
         'guests': [{
           'first_name': _nameController.text.trim(),
           'last_name': _surnameController.text.trim(),
+          'last_name2': _surname2Controller.text.isEmpty ? null : _surname2Controller.text.trim(),
           'document_type': _documentType,
           'document_number': _docNumberController.text.trim(),
           'nationality': _nationalityController.text.trim(),
@@ -134,6 +137,7 @@ class _PresentialCheckinScreenState extends State<PresentialCheckinScreen> {
       _selectedReservation = null;
       _nameController.clear();
       _surnameController.clear();
+      _surname2Controller.clear();
       _docNumberController.clear();
       _nationalityController.text = 'ES';
       _birthDateController.clear();
@@ -151,6 +155,7 @@ class _PresentialCheckinScreenState extends State<PresentialCheckinScreen> {
     _searchController.dispose();
     _nameController.dispose();
     _surnameController.dispose();
+    _surname2Controller.dispose();
     _docNumberController.dispose();
     _nationalityController.dispose();
     _birthDateController.dispose();
@@ -245,12 +250,14 @@ class _PresentialCheckinScreenState extends State<PresentialCheckinScreen> {
                     flex: 2,
                     child: TextFormField(
                       controller: _surnameController,
-                      decoration: const InputDecoration(labelText: 'Apellidos *'),
+                      decoration: const InputDecoration(labelText: 'Apellido 1 *'),
                       validator: (v) => v?.isEmpty == true ? 'Obligatorio' : null,
                     ),
                   ),
                 ],
               ),
+              if (_documentType == 'dni' || _documentType == 'nie')
+                Padding(padding: const EdgeInsets.only(top: 12), child: TextFormField(controller: _surname2Controller, decoration: const InputDecoration(labelText: 'Segundo apellido'))),
               const SizedBox(height: 12),
               Row(
                 children: [

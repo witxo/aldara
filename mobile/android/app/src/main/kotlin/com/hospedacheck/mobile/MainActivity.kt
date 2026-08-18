@@ -1,4 +1,4 @@
-package com.aldara.mobile
+package com.hospedacheck.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

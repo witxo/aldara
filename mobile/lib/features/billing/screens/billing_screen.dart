@@ -49,13 +49,17 @@ class _BillingScreenState extends State<BillingScreen> {
                     const SizedBox(width: 12),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text((_subscription!['plan'] as Map<String, dynamic>?)?['name'] ?? 'Plan', style: const TextStyle(fontWeight: FontWeight.w600)),
-                      Text('${(_subscription!['plan'] as Map<String, dynamic>?)?['price_monthly'] ?? ''}€/mes', style: const TextStyle(color: AppColors.textSecondary)),
+                      Text('${(_subscription!['plan'] as Map<String, dynamic>?)?['price_yearly'] ?? ''}€/año', style: const TextStyle(color: AppColors.textSecondary)),
                     ])),
                     StatusBadgeWidgetBilling(_subscription!['status'] as String? ?? ''),
                   ]),
                   if (_subscription!['trial_ends_at'] != null) ...[
                     const Divider(), Text('Período de prueba hasta ${_subscription!['trial_ends_at']}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   ],
+                  const Divider(),
+                  _limitRow('Alojamientos', '${(_subscription!['plan'] as Map<String, dynamic>?)?['max_properties'] ?? '∞'}'),
+                  _limitRow('Usuarios', '${(_subscription!['plan'] as Map<String, dynamic>?)?['max_users'] ?? '∞'}'),
+                  _limitRow('Reservas/mes', (_subscription!['plan'] as Map<String, dynamic>?)?['max_reservations'] != null ? '${(_subscription!['plan'] as Map<String, dynamic>?)?['max_reservations']}' : 'Ilimitadas'),
                 ]))),
                 const SizedBox(height: 24),
               ],
@@ -71,6 +75,14 @@ class _BillingScreenState extends State<BillingScreen> {
               ))),
             ]),
     );
+  }
+
+  Widget _limitRow(String label, String value) {
+    return Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(children: [
+      Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+      const SizedBox(width: 8),
+      Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+    ]));
   }
 }
 

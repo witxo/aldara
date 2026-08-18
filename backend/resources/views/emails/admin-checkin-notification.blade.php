@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -182,7 +182,7 @@
     <div class="header">
         <h1>✓ Nuevo check-in completado</h1>
         <p>Un huésped ha realizado el check-in online</p>
-        <span class="badge">{{ $checkin->reservation->property->name ?? 'Aldara' }}</span>
+        <span class="badge">{{ $checkin->reservation->property->name ?? 'HospedaCheck' }}</span>
     </div>
     <div class="body-card">
 
@@ -286,7 +286,7 @@
 
     </div>
     <div class="footer">
-        Aldara — Gestión de visitantes &bull; Este mensaje se generó automáticamente
+        HospedaCheck — Gestión de visitantes &bull; Este mensaje se generó automáticamente
     </div>
 </div>
 </body>

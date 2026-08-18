@@ -57,6 +57,31 @@ class _SesListScreenState extends State<SesListScreen> {
     } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); }
   }
 
+  Future<void> _retrySubmission(dynamic s) async {
+    try {
+      final api = context.read<AuthProvider>().api;
+      await api.post('/ses/submissions/${s['id']}/retry');
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reintentando envío'), backgroundColor: AppColors.primary)); _load(); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); }
+  }
+
+  Future<void> _deleteSubmission(dynamic s) async {
+    final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('Eliminar envío'),
+      content: const Text('¿Está seguro de eliminar este envío SES?'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
+      ],
+    ));
+    if (confirm != true) return;
+    try {
+      final api = context.read<AuthProvider>().api;
+      await api.delete('/ses/submissions/${s['id']}');
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Envío eliminado'), backgroundColor: AppColors.success)); _load(); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -84,6 +109,9 @@ class _SesListScreenState extends State<SesListScreen> {
                     StatusBadge(s['status'] as String?),
                     if (s['status'] == 'prepared')
                       IconButton(icon: const Icon(Icons.send, size: 18, color: AppColors.primary), onPressed: () => _sendSubmission(s)),
+                    if (s['status'] == 'failed')
+                      IconButton(icon: const Icon(Icons.refresh, size: 18, color: AppColors.warning), onPressed: () => _retrySubmission(s)),
+                    IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.danger), onPressed: () => _deleteSubmission(s)),
                   ]),
                 ));
               },

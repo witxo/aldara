@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" type="image/png" href="{{ asset('images/logo_aldara.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_hospedacheck.png') }}">
     <title>@yield('title', 'Admin') — {{ config('app.name') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @livewireStyles
@@ -14,7 +14,7 @@
     <div class="min-h-screen flex">
         <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden lg:flex flex-col">
             <div class="p-4 border-b border-gray-700">
-                <img src="{{ asset('images/logo_aldara.png') }}" alt="Aldara" class="h-8 mb-2 brightness-200">
+                <img src="{{ asset('images/logo_hospedacheck.png') }}" alt="HospedaCheck" class="h-8 mb-2 brightness-200">
                 <h1 class="text-xl font-bold text-blue-400">{{ config('app.name') }}</h1>
                 <p class="text-xs text-gray-400 mt-1">Panel de administración</p>
             </div>

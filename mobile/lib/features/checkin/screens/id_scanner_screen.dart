@@ -13,6 +13,7 @@ class IdScannerResult {
   final String documentNumber;
   final String? firstName;
   final String? lastName;
+  final String? lastName2;
   final String? birthDate;
   final String? nationality;
   final String? gender;
@@ -24,6 +25,7 @@ class IdScannerResult {
     required this.documentNumber,
     this.firstName,
     this.lastName,
+    this.lastName2,
     this.birthDate,
     this.nationality,
     this.gender,
@@ -166,6 +168,7 @@ class _IdScannerScreenState extends State<IdScannerScreen>
       documentNumber: parsed.documentNumber,
       firstName: parsed.firstName,
       lastName: parsed.lastName,
+      lastName2: parsed.lastName2,
       birthDate: parsed.birthDate,
       nationality: parsed.nationality,
       gender: parsed.gender,

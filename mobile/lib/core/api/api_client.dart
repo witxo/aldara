@@ -20,6 +20,7 @@ class ApiClient {
   ApiClient() {
     _dio = Dio(BaseOptions(
       baseUrl: const String.fromEnvironment(
+        // TODO: al migrar el dominio, cambiar a https://hospedacheck.es/api/v1
         'API_URL',
         defaultValue: 'https://aldara.ivema.es/api/v1',
       ),
