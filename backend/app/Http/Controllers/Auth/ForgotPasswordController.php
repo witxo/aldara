@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 
 class ForgotPasswordController extends Controller
 {
@@ -11,8 +13,19 @@ class ForgotPasswordController extends Controller
         return view('auth.passwords.email');
     }
 
-    public function sendResetLinkEmail()
+    public function sendResetLinkEmail(Request $request)
     {
-        return back()->with('error', 'Funcionalidad no disponible temporalmente');
+        $request->validate([
+            'email' => 'required|email',
+            'recaptcha_token' => 'required|recaptcha_v3:forgot_password',
+        ]);
+
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with('success', __($status))
+            : back()->withErrors(['email' => __($status)]);
     }
 }

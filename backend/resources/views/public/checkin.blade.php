@@ -29,8 +29,9 @@
 @else
     <div class="bg-white rounded-lg shadow p-6"
           x-data="checkinWizard()">
-        <form method="POST" action="{{ route('public.checkin.submit', $reservation->checkin_token) }}" class="space-y-6" novalidate>
-            @csrf
+<form method="POST" action="{{ route('public.checkin.submit', $reservation->checkin_token) }}" class="space-y-6" novalidate id="checkinForm">
+                @csrf
+                <input type="hidden" name="recaptcha_token" id="recaptcha_token_checkin_submit">
 
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
                 <h3 class="font-semibold text-blue-800 mb-1">Reserva: {{ $reservation->code }}</h3>
@@ -317,12 +318,27 @@
         });
     }
 
-    window.clearSignature = function () {
+window.clearSignature = function () {
         var canvas = document.getElementById('signature-pad');
         if (!canvas) return;
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         document.getElementById('signature-data').value = '';
     };
+
+    document.getElementById('checkinForm').addEventListener('submit', async function(e) {
+        if (typeof recaptchaExecute === 'function') {
+            e.preventDefault();
+            try {
+                const token = await recaptchaExecute('checkin_submit');
+                document.getElementById('recaptcha_token_checkin_submit').value = token;
+                this.submit();
+            } catch (err) {
+                console.error('reCAPTCHA error:', err);
+                this.submit();
+            }
+        }
+    });
 </script>
+@endif
 @endpush

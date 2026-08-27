@@ -12,8 +12,9 @@
         </div>
         <div class="bg-white rounded-lg shadow p-8">
             <h2 class="text-xl font-semibold mb-6">Iniciar sesión</h2>
-            <form method="POST" action="{{ route('login') }}">
+            <form method="POST" action="{{ route('login') }}" id="loginForm">
                 @csrf
+                <input type="hidden" name="recaptcha_token" id="recaptcha_token_login">
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input type="email" name="email" value="{{ old('email') }}" required autofocus class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -30,6 +31,9 @@
                     </label>
                     <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:underline">¿Olvidó su contraseña?</a>
                 </div>
+                @error('recaptcha_token')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
                 <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition">Entrar</button>
             </form>
             <p class="mt-6 text-center text-sm text-gray-500">
@@ -39,3 +43,21 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        if (typeof recaptchaExecute === 'function') {
+            e.preventDefault();
+            try {
+                const token = await recaptchaExecute('login');
+                document.getElementById('recaptcha_token_login').value = token;
+                this.submit();
+            } catch (err) {
+                console.error('reCAPTCHA error:', err);
+                this.submit();
+            }
+        }
+    });
+</script>
+@endpush

@@ -30,6 +30,7 @@ class RegisterController extends Controller
             'company_name' => 'required|string|max:255',
             'tax_id' => 'nullable|string|max:20',
             'plan' => 'required|string|in:basic,advanced',
+            'recaptcha_token' => 'required|recaptcha_v3:register',
         ]);
 
         $user = User::create([

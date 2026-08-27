@@ -8,6 +8,7 @@ use App\Domains\Checkin\Models\Checkin;
 use App\Domains\Guest\Models\Guest;
 use App\Events\CheckinCompleted;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class PublicCheckinController extends Controller
 {
@@ -52,17 +53,7 @@ class PublicCheckinController extends Controller
 
     public function submit(Request $request, string $token)
     {
-        $reservation = Reservation::where('checkin_token', $token)->firstOrFail();
-
-        if (!$reservation->isTokenValid()) {
-            return response()->json([
-                'data' => null,
-                'message' => 'El enlace de check-in ha expirado',
-                'status' => 410,
-            ], 410);
-        }
-
-        $validated = $request->validate([
+        $request->validate([
             'guests' => 'required|array|min:1',
             'guests.*.first_name' => 'required|string|max:100',
             'guests.*.last_name' => 'required|string|max:100',
@@ -78,7 +69,20 @@ class PublicCheckinController extends Controller
             'consent_legal' => 'accepted',
             'consent_marketing' => 'nullable|boolean',
             'consent_data_retention' => 'accepted',
+            'recaptcha_token' => 'required|recaptcha_v3:checkin_submit',
         ]);
+
+        $reservation = Reservation::where('checkin_token', $token)->firstOrFail();
+
+        if (!$reservation->isTokenValid()) {
+            return response()->json([
+                'data' => null,
+                'message' => 'El enlace de check-in ha expirado',
+                'status' => 410,
+            ], 410);
+        }
+
+        $validated = $request->validated();
 
         $checkin = Checkin::where('reservation_id', $reservation->id)
             ->where('type', 'online')

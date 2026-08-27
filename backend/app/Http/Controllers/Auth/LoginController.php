@@ -18,6 +18,7 @@ class LoginController extends Controller
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
+            'recaptcha_token' => 'required|recaptcha_v3:login',
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {

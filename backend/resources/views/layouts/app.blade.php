@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="{{ asset('images/logo_hospedacheck.png') }}">
     <title>@yield('title', config('app.name')) — {{ config('app.name') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    @include('partials.recaptcha')
     @stack('head')
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased">

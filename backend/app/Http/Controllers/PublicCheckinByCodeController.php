@@ -31,6 +31,7 @@ class PublicCheckinByCodeController extends Controller
         $validated = $request->validate([
             'checkin' => 'required|date',
             'checkout' => 'required|date|after:checkin',
+            'recaptcha_token' => 'required|recaptcha_v3:checkin_search',
         ], [
             'checkin.required' => 'Introduce la fecha de entrada.',
             'checkin.date' => 'La fecha de entrada no es válida.',

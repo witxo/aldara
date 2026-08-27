@@ -58,6 +58,7 @@ class PublicCheckinController extends Controller
             'signature_data' => 'nullable|string',
             'consent_legal' => 'accepted',
             'consent_data_retention' => 'accepted',
+            'recaptcha_token' => 'required|recaptcha_v3:checkin_submit',
         ]);
 
         if ($adults !== (int) $reservation->adults || $children !== (int) $reservation->children) {

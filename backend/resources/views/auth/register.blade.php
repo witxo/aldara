@@ -12,8 +12,9 @@
         </div>
         <div class="bg-white rounded-lg shadow p-8">
             <h2 class="text-xl font-semibold mb-6">Crear cuenta</h2>
-            <form method="POST" action="{{ route('register') }}">
+            <form method="POST" action="{{ route('register') }}" id="registerForm">
                 @csrf
+                <input type="hidden" name="recaptcha_token" id="recaptcha_token_register">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
@@ -85,6 +86,10 @@
                     @error('plan') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
+                @error('recaptcha_token')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+
                 <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition">Crear cuenta — Prueba gratuita 15 días</button>
             </form>
             <p class="mt-6 text-center text-sm text-gray-500">
@@ -105,6 +110,20 @@
             this.closest('label').classList.add('border-blue-500', 'bg-blue-50', 'ring-2', 'ring-blue-500');
             this.closest('label').classList.remove('border-gray-200');
         });
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        if (typeof recaptchaExecute === 'function') {
+            e.preventDefault();
+            try {
+                const token = await recaptchaExecute('register');
+                document.getElementById('recaptcha_token_register').value = token;
+                this.submit();
+            } catch (err) {
+                console.error('reCAPTCHA error:', err);
+                this.submit();
+            }
+        }
     });
 </script>
 @endpush

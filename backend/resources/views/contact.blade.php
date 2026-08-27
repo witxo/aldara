@@ -21,8 +21,9 @@
                 <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4">{{ session('error') }}</div>
             @endif
 
-            <form method="POST" action="{{ route('contacto.send') }}">
+            <form method="POST" action="{{ route('contacto.send') }}" id="contactForm">
                 @csrf
+                <input type="hidden" name="recaptcha_token" id="recaptcha_token_contact">
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
@@ -48,6 +49,10 @@
                     @error('message') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
+                @error('recaptcha_token')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+
                 <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition">Enviar mensaje</button>
             </form>
 
@@ -58,3 +63,21 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+        if (typeof recaptchaExecute === 'function') {
+            e.preventDefault();
+            try {
+                const token = await recaptchaExecute('contact');
+                document.getElementById('recaptcha_token_contact').value = token;
+                this.submit();
+            } catch (err) {
+                console.error('reCAPTCHA error:', err);
+                this.submit();
+            }
+        }
+    });
+</script>
+@endpush
